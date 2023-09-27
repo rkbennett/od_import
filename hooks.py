@@ -72,7 +72,7 @@ def hook_clr_loader(finder, module, path, proto_handler, proto_config):
 import os
 import sys
 import importlib
-import _memimporter
+import pyclrhost
 import {proto_handler}
 import {proto_config}
 from cffi import FFI
@@ -97,9 +97,9 @@ if '{module.__name__}.ffi' not in sys.modules:
             runtime_version = [ name for name in os.listdir(net_path) if os.path.isdir(os.path.join(net_path, name)) ][-1]
         else:
             runtime_version = 'v4.0.30319'
-        _memimporter.dotnet(runtime_version, dll)
-        _memimporter.pyclr_initialize()
-        return _memimporter
+        pyclrhost.dotnet(runtime_version, dll)
+        pyclrhost.pyclr_initialize()
+        return pyclrhost
 
     sys.modules['{module.__name__}.ffi'].load_netfx = override_load_netfx
 
