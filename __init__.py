@@ -134,9 +134,12 @@ class ODImporter(object):
         url: String which contains target url to import packages from
         INSECURE: boolean which allows unencrypted protocols to be used
         ignores: list of packages to ignore imports for
+        excludes: list of packages to exclude imports of
+        zip_password: bytes which contains password for decrypting zip file
+        config: dictionary of configurations for the protocol handler
     """
 
-    def __init__(self, url: str, INSECURE: bool=False, ignores: list=None, excludes: list=[], config={}):
+    def __init__(self, url: str, INSECURE: bool=False, ignores: list=None, excludes: list=[], zip_password: bytes=None, config={}):
         self.uuid = str(uuid.uuid4().int)
         self.unique_proto_handler = 'proto_handler_' + self.uuid
         self.unique_proto_config = 'proto_config_' + self.uuid
@@ -153,12 +156,18 @@ class ODImporter(object):
         self.proto_handler, secure = self.protocol_resolver(self.url)
         sys.modules[self.unique_proto_handler] = self.proto_handler
         sys.modules[self.unique_proto_config] = self.config
+        if isinstance(zip_password, str):
+            self.zip_password = bytes(zip_password, 'utf-8')
+        elif isinstance(zip_password, bytes) or zip_password is None:
+            self.zip_password = zip_password
+        else:
+            raise ValueError("[-] zip_password must be one of String, Bytes, or None")
         if not secure and not self.INSECURE:
             raise ImportError("[-] Insecure protocol used without setting INSECURE")
         resp = self.proto_handler(self.url, path_cache=self.path_cache, config=self.config)
         # Check if file is a zip
         if resp.startswith(b'\x50\x4b\x03\x04'):
-            archive_handler = archive_handlers['zip']()(resp, self.url, self.path_cache)
+            archive_handler = archive_handlers['zip']()(resp, self.url, self.path_cache, pwd=self.zip_password)
             self.path_cache = archive_handler.path_cache
             self.proto_handler = archive_handler.extractor
         # Check if file is a tar or tgz
@@ -336,7 +345,7 @@ class ODImporter(object):
         return mod
 
 
-def add_remote_source(url: str, INSECURE: bool=False, return_importer: bool=False, config: dict={}):
+def add_remote_source(url: str, INSECURE: bool=False, return_importer: bool=False, zip_password: bytes=None, config: dict={}):
     """
     Description:
         Creates an ODImporter object and inserts it into the first entry of sys.meta_path
@@ -345,7 +354,7 @@ def add_remote_source(url: str, INSECURE: bool=False, return_importer: bool=Fals
         INSECURE: boolean which allows insecure protocols to be used for remote imports
         return_importer: boolean which determines if the importer object should be returned (used for internal calls)    
     """
-    importer = ODImporter(url, INSECURE, config=config)
+    importer = ODImporter(url, INSECURE, zip_password=zip_password, config=config)
     sys.meta_path.insert(0, importer)
     if return_importer:
         return importer
@@ -368,14 +377,14 @@ def remove_remote_source(url: str):
                 logging.warning(e)
 
 @contextmanager
-def remote_source(url: str, INSECURE: bool=False, config: dict={}):
+def remote_source(url: str, INSECURE: bool=False, zip_password: bytes=None, config: dict={}):
     """
     Description:
         Allows for temporary import hooking to run imports/commands within a limited namespace scope
     Args:
         url: The url of the target source
     """
-    import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
+    import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, zip_password=zip_password, config=config)
     try:
         yield
     except ImportError as e:

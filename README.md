@@ -100,6 +100,10 @@ Configs are a dict of attributes associated with the remote source for packages/
 
 This is a boolean arg that is supplied to the hook constructor, which enables the use of insecure protocols (http, smb, ftp)
 
+## Zip passwords
+
+If you are importing from a zip which requires a password, you must provide the zip_password keyword arg to the hook constructor
+
 ## TODO
 
 ### HTTP handler
@@ -122,8 +126,6 @@ This is a boolean arg that is supplied to the hook constructor, which enables th
 * `proxy support`
 
 ### Zip handler
-
-* `password protected`
 
 ### Tar handler
 
