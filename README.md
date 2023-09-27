@@ -61,7 +61,7 @@ with od_import.remote_source('https://my-packages.local/package.zip'):
 
 ```python
 import py3memimporter
-import od_importer
+import od_import
 od_import.add_remote_source('http://my-packages.local/site-packages', INSECURE=True)
 import psutil
 ```
