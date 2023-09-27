@@ -6,7 +6,7 @@ _Remote_, _in-memory_ Python _package/module_ importing **via HTTP/S, FTP, or SM
 
 Inspired by [`httpimport`](https://github.com/operatorequals/httpimport).
 
-`od_import` enables Python packages and modules to be imported within a Python interpreter's process memory via **remote `URIs`**
+`od_importer` enables Python packages and modules to be imported within a Python interpreter's process memory via **remote `URIs`**
 
 ## Features
 
