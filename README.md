@@ -57,6 +57,15 @@ with od_import.remote_source('https://my-packages.local/package.zip'):
   import zip_package
 ```
 
+### Load Python packages from password protected zip archives served over HTTP/S, FTP, or SMB
+
+**_No files touch disk during import_**
+
+```python
+with od_import.remote_source('https://my-packages.local/package.zip', zip_password=b"SuperSecretPassword"):
+  import zip_package
+```
+
 ### Importing modules/packages with c extensions (uses [`py3memimporter`](https://github.com/rkbennett/py3memimporter))
 
 ```python
