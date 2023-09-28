@@ -33,6 +33,23 @@ with od_import.remote_source('http://my-packages.local/site-packages', INSECURE=
   import package
 ```
 
+### Load package/module via HTTPS location without certificate verification
+
+```python
+config = {"verify": False}
+with od_import.remote_source('http://my-packages.local/site-packages', config=config):
+  import package
+```
+
+### Load package/module via HTTPS location with custom certificate trust
+
+```python
+crt = open("my-ca-crt.crt").read()
+config = {"ca_data": crt}
+with od_import.remote_source('http://my-packages.local/site-packages', config=config):
+  import package
+```
+
 ### Load package/module via FTP location
 
 ```python
