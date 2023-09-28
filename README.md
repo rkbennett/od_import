@@ -150,7 +150,6 @@ If you are importing from a zip which requires a password, you must provide the 
 * `NFS handler`
 * `Packaging`
 * `Testing for other python distros`
-* `Test custom certificate support`
 
 ## Gotchas
 

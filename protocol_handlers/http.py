@@ -93,7 +93,7 @@ def http(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
         elif config.ca_file or config.ca_data:
-            ssl_context = ssl.create_default_context(cafile=ca_file, cadata=ca_data)
+            ssl_context = ssl.create_default_context(cafile=config.ca_file, cadata=config.ca_data)
         else:
             ssl_context = None
         req_handler = HTTPSHandler(context=ssl_context)
