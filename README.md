@@ -87,6 +87,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `password`
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
+* `verify` (enable/disable certificate verification for https certificates, defaults to `True`)
 
 #### SMB
 
@@ -117,7 +118,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
-* `certificate verify disable`
 * `custom certificate support`
 * `github helper`
 * `gitlab helper`
