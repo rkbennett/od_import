@@ -108,6 +108,15 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `ca_file` (path to ca file for certificate trust)
 * `ca_data` (string containing one more concatinated ca certificates)
 
+#### GITHUB
+
+* `user`
+* `password`
+* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
+* `proxy` (Currently supports unauthenticated only)
+* `api_key` (Not currently use)
+* `cert` (Not currently use)
+
 #### SMB
 
 * `port` (defaults to 445)
@@ -137,10 +146,16 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
-* `github helper`
+* `github-zip helper`
+* `github-api helper`
 * `gitlab helper`
 * `pypi/pip helper`
 * `bitbucket helper`
+
+### GITHUB handler
+
+* `implement cert auth`
+* `implement api key auth`
 
 ### SMB handler
 
