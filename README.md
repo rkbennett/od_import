@@ -50,6 +50,13 @@ with od_import.remote_source('http://my-packages.local/site-packages', config=co
   import package
 ```
 
+### Load package/module via GITHUB repo
+
+```python
+with od_import.remote_source('github://rkbennett/py3memimporter'):
+  import py3memimporter
+```
+
 ### Load package/module via FTP location
 
 ```python
