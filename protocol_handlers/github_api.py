@@ -27,7 +27,7 @@ from urllib.error import (
 
 ########################## Protocol Handlers #########################
 
-def github_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: object=None) -> bytes:
+def github_api(url, path="", path_cache: list=[], cache_update: bool=True, config: object=None) -> bytes:
     """
     Description:
         Handles http/s requests for content
@@ -81,7 +81,6 @@ def github_zip(url, path="", path_cache: list=[], cache_update: bool=True, confi
         tar_bytes = tarfile.open(fileobj=tar_io, mode='w:gz')
         files = [item for item in zip_bytes_read.infolist()][1:]
         for item in files:
-            #content = zip_bytes_read.open(item.filename, 'r').read()
             tar_info = tarfile.TarInfo(name=item.filename.replace(f"""{repo.split("/")[-1]}-{config.branch}/""", ""))
             tar_info.size = item.file_size
             tar_info.mtime = time.mktime(tuple(item.date_time) +

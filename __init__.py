@@ -59,12 +59,22 @@ def github():
 def github_zip():
     """ 
     Description:
+        Handles loading of dependencies of github_zip protocol handler
+    Returns:
+        function: A function which handles github zip-based imports
+    """
+    from .protocol_handlers import github_zip
+    return github_zip.github_zip
+
+def github_api():
+    """ 
+    Description:
         Handles loading of dependencies of github protocol handler
     Returns:
         function: A function which handles github-based imports
     """
-    from .protocol_handlers import github_zip
-    return github_zip.github_zip
+    from .protocol_handlers import github_api
+    return github_api.github_api
 
 def smb():
     """ 
@@ -114,7 +124,8 @@ supported_protos = {
     "smb": ["smb"],
     "ftp": ["ftp"],
     "github": ["github"],
-    "github_zip": ["github_zip"]
+    "github_zip": ["github_zip"],
+    "github_api": ["github_api"]
 }
 
 proto_handlers = {
@@ -122,7 +133,8 @@ proto_handlers = {
     "smb": smb,
     "ftp": ftp,
     "github": github,
-    "github_zip": github_zip
+    "github_zip": github_zip,
+    "github_api": github_api
 }
 
 archive_handlers = {
@@ -134,6 +146,7 @@ secure_protos = [
     "https",
     "github",
     "github_zip"
+    "github_api"
 ]
 
 ########################## Config class ##############################

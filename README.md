@@ -50,14 +50,14 @@ with od_import.remote_source('http://my-packages.local/site-packages', config=co
   import package
 ```
 
-### Load package/module via GITHUB repo
+### Load package/module via GITHUB repo (uses github.com and raw.githubusercontent.com)
 
 ```python
 with od_import.remote_source('github://rkbennett/py3memimporter'):
   import py3memimporter
 ```
 
-### Load package/module via GITHUB repo ZIP
+### Load package/module via GITHUB repo ZIP (uses github.com)
 
 ```python
 with od_import.remote_source('github_zip://rkbennett/py3memimporter'):
@@ -129,7 +129,6 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
 * `api_key` (Not currently use)
-* `cert` (Not currently use)
 
 #### GITHUB ZIP
 
@@ -138,7 +137,6 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
 * `api_key` (Not currently use)
-* `cert` (Not currently use)
 
 #### SMB
 
@@ -176,12 +174,10 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### GITHUB handler
 
-* `implement cert auth`
 * `implement api key auth`
 
 ### GITHUB ZIP handler
 
-* `implement cert auth`
 * `implement api key auth`
 
 ### SMB handler
