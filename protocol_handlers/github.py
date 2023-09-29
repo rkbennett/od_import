@@ -102,6 +102,8 @@ def github(url, path="", path_cache: list=[], cache_update: bool=True, config: o
         req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
     else:
         req_handler = ProxyHandler({})
+    if config.api_key:
+        config.headers["Authorization"] =f"Bearer {config.api_key}"
     req_opener = build_opener(req_handler)
     if config.headers:
         req_opener.addheaders = [(header, value) for header, value in config.headers.items()]

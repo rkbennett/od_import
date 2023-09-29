@@ -145,7 +145,7 @@ archive_handlers = {
 secure_protos = [
     "https",
     "github",
-    "github_zip"
+    "github_zip",
     "github_api"
 ]
 
