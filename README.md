@@ -57,11 +57,20 @@ with od_import.remote_source('github://rkbennett/py3memimporter'):
   import py3memimporter
 ```
 
-### Load package/module via GITHUB repo ZIP (uses github.com)
+### Load package/module via repo ZIP - github example
 
 ```python
-with od_import.remote_source('github_zip://rkbennett/py3memimporter'):
+config = config={"type": "git_zip", "git": "github", "user": "naksyn", "repo": "PythonMemoryModule"}
+with od_import.remote_source('https://github.com', config=config):
   import py3memimporter
+```
+
+### Load package/module via repo ZIP - gitlab example
+
+```python
+config = config={"type": "git_zip", "git": "gitlab", "group": "mygroup", "project": "myproject", "repo": "myrepo", "api_key": "glpat_1234567890"}
+with od_import.remote_source('https://gitlab.local', config=config):
+  import myrepo_package
 ```
 
 ### Load package/module via GITHUB repo API (uses api.github.com, would recommend you use the api_key config or you will be severely rate limited)
