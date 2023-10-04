@@ -2,7 +2,7 @@
 
 _Remote_, _in-memory_ Python _package/module_ importing **via HTTP/S, FTP, or SMB**
 
-## **Compatible with Python<3.12**
+## **Compatible with Python 3.6-3.11**
 
 Inspired by [`httpimport`](https://github.com/operatorequals/httpimport).
 
@@ -146,6 +146,12 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `proxy` (Currently supports unauthenticated only)
 * `api_key`
 
+#### GITHUB API
+
+* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
+* `proxy` (Currently supports unauthenticated only)
+* `api_key`
+
 #### SMB
 
 * `port` (defaults to 445)
@@ -155,12 +161,6 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `client` (what the client wants to be called, defaults to localhost)
 * `nbname` (netbios name for remote source, defaults to hostname from URL)
 * `smb2` (enables smb2 support, defaults to True)
-
-#### GITHUB API
-
-* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
-* `proxy` (Currently supports unauthenticated only)
-* `api_key`
 
 #### FTP
 
@@ -182,13 +182,14 @@ If you are importing from a zip which requires a password, you must provide the 
 ### HTTP handler
 
 * `gitlab helper`
-* `pypi/pip helper`
+* `pypi helper`
 * `bitbucket helper`
 
 ### GITHUB handler
 
 ### GITHUB ZIP handler
 
+### GITHUB API handler
 
 ### SMB handler
 
