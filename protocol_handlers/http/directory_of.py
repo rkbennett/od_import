@@ -56,7 +56,7 @@ class LinkScrape(HTMLParser):
 
 ########################## Protocol Handlers #########################
 
-def http(url, path="", path_cache: list=[], cache_update: bool=True, config: object=None) -> bytes:
+def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, config: object=None) -> bytes:
     """
     Description:
         Handles http/s requests for content
