@@ -92,7 +92,10 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             creds = f"{config.username}@"
         urlsplit = url.split('://')
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
-    resp = opener(url).read()
+    resp_obj = opener(url)
+    if resp_obj.url.endswith("sign_in"):
+        raise ImportError("Failed to authenticate")
+    resp = resp_obj.read()
     if resp.startswith(b'\x50\x4b\x03\x04'):
         zip_io = io.BytesIO(resp)
         tar_io = io.BytesIO()
