@@ -69,8 +69,8 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     return:
         bytes of file content or empty bytes object
     """
-    if 'user' not in config.__dict__:
-        config.user = ""
+    if 'username' not in config.__dict__:
+        config.username = ""
     if 'password' not in config.__dict__:
         config.password = ""
     if 'proxy' not in config.__dict__:
@@ -103,11 +103,11 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     if config.headers:
         req_opener.addheaders = [(header, value) for header, value in config.headers.items()]
     opener = req_opener.open
-    if config.user:
+    if config.username:
         if config.password:
-            creds = f"{quote(config.user)}:{quote(config.password)}@"
+            creds = f"{quote(config.username)}:{quote(config.password)}@"
         else:
-            creds = f"{config.user}@"
+            creds = f"{config.username}@"
         urlsplit = url.split('://')
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     if path:

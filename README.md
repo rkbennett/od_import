@@ -98,6 +98,20 @@ with od_import.remote_source('https://my-gitlab.local', config=config):
   import mypackage
 ```
 
+### Load package/module via github wrapper
+
+```python
+with od_import.github("rkbennett", "py3memimporter", branch="main", git_type="git_zip", api_key="github_pat_somelongapikeystring"):
+  import py3memimporter
+```
+
+### Load package/module via gitlab wrapper
+
+```python
+with od_import.gitlab("https://my-gitlab.local", "mygroup", "myproject", branch="main", git_type="git_api", api_key="glpat_1234567890", verify=False):
+  import py3memimporter
+```
+
 ### Load package/module via FTP location
 
 ```python
