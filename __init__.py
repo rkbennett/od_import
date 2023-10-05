@@ -56,16 +56,6 @@ def github():
     from .protocol_handlers import github
     return github.github
 
-def github_api():
-    """ 
-    Description:
-        Handles loading of dependencies of github protocol handler
-    Returns:
-        function: A function which handles github-based imports
-    """
-    from .protocol_handlers import github_api
-    return github_api.github_api
-
 def smb():
     """ 
     Description:
@@ -113,16 +103,14 @@ supported_protos = {
     "http": ["http","https"],
     "smb": ["smb"],
     "ftp": ["ftp"],
-    "github": ["github"],
-    "github_api": ["github_api"]
+    "github": ["github"]
 }
 
 proto_handlers = {
     "http": http,
     "smb": smb,
     "ftp": ftp,
-    "github": github,
-    "github_api": github_api
+    "github": github
 }
 
 archive_handlers = {
@@ -132,8 +120,7 @@ archive_handlers = {
 
 secure_protos = [
     "https",
-    "github",
-    "github_api"
+    "github"
 ]
 
 ########################## Config class ##############################
