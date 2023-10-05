@@ -22,7 +22,7 @@ from urllib.error import (
     URLError
 )
 
-from urllib.parse import urlencode
+from urllib.parse import quote_plus as urlencode
 
 ########################## Protocol Handlers #########################
 
@@ -53,14 +53,17 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         if config.api_key:
             config.headers["Authorization"] =f"Bearer {config.api_key}"
     if config.git == "gitlab":
-        if ()'group' not in config.__dict__ or 'project' not in config.__dict__) and 'project_id' not in config.__dict__:
+        if ('group' not in config.__dict__ or 'project' not in config.__dict__) and 'project_id' not in config.__dict__:
             raise KeyError("Missing required key(s) 'group' and 'project' required when git type is 'gitlab' and 'project_id' key not set...")
         if config.api_key:
             config.headers["PRIVATE-TOKEN"] =f"{config.api_key}"
         if 'project_id' not in config.__dict__:
             config.project_id = None
     if 'branch' not in config.__dict__:
-        config.branch = None
+        if config.git == "gitlab":
+            config.branch = None
+        else:
+            config.branch = "main"
     if 'proxy' not in config.__dict__:
         config.proxy = {}
     if 'User-agent' not in config.headers:
@@ -75,19 +78,11 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     opener = req_opener.open
     if config.git == "github":
         url = url.replace("https://api.github.com", f"https://api.github.com/repos/{config.user}/{config.repo}/contents")
-
-
-
-
-
-
-
-
-
-
-
+        if path:
+            url = "/".join([url, path])
+        if config.branch:
+            url = f"{url.rstrip('/')}?ref={config.branch}"
     elif config.git == "gitlab":
-        raise ImportError("Not currently enabled")
         if not config.project_id:
             search_resp = json.loads(opener(f"{url}/api/v4/projects?search={config.project}").read())
             namespaced_path = f"{config.group}/{config.project}"
@@ -97,32 +92,27 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
                     break
             if not config.project_id:
                 return b""
-        if url.endswith("/"):
-            url = url.replace(url.split("/")[2], f"{url.split("/")[2]}/api/v4/projects/{config.project_id}/repository/tree")
+        if (url.endswith("/") or len(url.split("/")) == 3 and not path) or (path and path.endswith("/")):
+            url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/api/v4/projects/{config.project_id}/repository/tree?ref={config.branch}")
+            if path:
+                url = f"{url}&path={urlencode(path)}"
         else:
-            url = url.replace(url.split("/")[2], f"{url.split("/")[2]}/api/v4/projects/{config.project_id}/repository/files/")
-        logging.warn(url)
-    
-
-
-
-
-
-
-    if path:
-        url = "/".join([url, path])
-    if config.branch:
-        url = f"{url.rstrip('/')}?ref={config.branch}"
-    logging.warn(url)
+            url_path = url.split(url.split("/")[2])[1]
+            url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/api/v4/projects/{config.project_id}/repository/files/")
+            if url_path:
+                url = url.replace(url_path, f"{urlencode(url_path.lstrip('/'))}")
+                url = f"{url}?ref={config.branch}"
     resp = opener(url).read()
     resp_json = json.loads(resp)
     if isinstance(resp_json, dict):
         resp = b64decode(resp_json['content'].encode())
-    logging.warn(path_cache)
     if cache_update:
         try:
             # attempt to parse links on the page
-            repo_files = [item['path'] if item['type'] == "file" else f"{item['path']}/" for item in json.loads(resp)]
+            if config.git == "github":
+                repo_files = [item['path'] if item['type'] == "file" else f"{item['path']}/" for item in json.loads(resp)]
+            else:
+                repo_files = [item['path'] if item['type'] == "blob" else f"{item['path']}/" for item in json.loads(resp)]
             path_cache += repo_files
         except Exception as e:
             # do some logging

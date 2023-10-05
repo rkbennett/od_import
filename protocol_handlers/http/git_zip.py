@@ -49,7 +49,9 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         config.api_key = None
     if config.git == "github":
         if 'user' not in config.__dict__:
-            raise KeyError("Missing required key 'user' when git type is 'github'")
+            raise KeyError("Missing required key 'user' when git type is 'github'...")
+        if 'repo' not in config.__dict__:
+            raise KeyError("Missing required key 'repo' when git type is 'github'...")
         if config.api_key:
             config.headers["Authorization"] =f"Bearer {config.api_key}"
     if config.git == "gitlab":
@@ -57,10 +59,9 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             raise KeyError("Missing required key 'group' when git type is 'gitlab'...")
         if 'project' not in config.__dict__:
             raise KeyError("Missing required key 'project' when git type is 'gitlab'...")
+        config.repo = config.project
         if config.api_key:
             config.headers["PRIVATE-TOKEN"] =f"{config.api_key}"
-    if 'repo' not in config.__dict__:
-        raise KeyError("Missing required key 'repo'...")
     if 'branch' not in config.__dict__:
         config.branch = "main"
     if 'username' not in config.__dict__:
@@ -84,7 +85,7 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     if config.git == "github":
         url = f"{url}/{config.user}/{config.repo}/archive/refs/heads/{config.branch}.zip"
     elif config.git == "gitlab":
-        url = f"{url}/{config.group}/{config.project}/{config.repo}/-/archive/{config.branch}/{config.repo}-{config.branch}.zip"
+        url = f"{url}/{config.group}/{config.project}/-/archive/{config.branch}/{config.project}-{config.branch}.zip"
     if config.username:
         if config.password:
             creds = f"{quote(config.username)}:{quote(config.password)}@"
