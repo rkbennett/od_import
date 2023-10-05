@@ -146,25 +146,14 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `verify` (enable/disable certificate verification for https certificates, defaults to `True`)
 * `ca_file` (path to ca file for certificate trust)
 * `ca_data` (string containing one more concatinated ca certificates)
+* `type` (one of dir, git_zip, or git_api; currently defaults to dir)
+* `api_key` (only used for git_zip and git_api types)
+* `git` (only accepts `gitlab` and `github` currently; only used for git_zip and git_api types)
 
 #### GITHUB
 
 * `user`
 * `password`
-* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
-* `proxy` (Currently supports unauthenticated only)
-* `api_key`
-
-#### GITHUB ZIP
-
-* `user`
-* `password`
-* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
-* `proxy` (Currently supports unauthenticated only)
-* `api_key`
-
-#### GITHUB API
-
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
 * `api_key`
@@ -201,12 +190,9 @@ If you are importing from a zip which requires a password, you must provide the 
 * `gitlab helper`
 * `pypi helper`
 * `bitbucket helper`
+* `add multiple gitlab token types to git helpers`
 
 ### GITHUB handler
-
-### GITHUB ZIP handler
-
-### GITHUB API handler
 
 ### SMB handler
 
@@ -230,7 +216,9 @@ If you are importing from a zip which requires a password, you must provide the 
 ### Etc
 
 * `More documentation`
+* `Pip handler`
 * `NFS handler`
+* `Wrappers for git http helpers`
 * `Packaging`
 * `Testing for other python distros`
 

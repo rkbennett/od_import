@@ -2,6 +2,7 @@ import sys
 import logging
 
 from . import (
+    git,
     git_zip,
     git_api,
     directory_of
@@ -26,7 +27,9 @@ def http(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
     if 'type' not in config.__dict__ or config.type == 'dir':
         helper = directory_of.directory_of
     elif 'type' in config.__dict__:
-        if config.type == "git_zip":
+        if config.type == "git":
+            helper = git.git
+        elif config.type == "git_zip":
             helper = git_zip.git_zip
         elif config.type == "git_api":
             helper = git_api.git_api
