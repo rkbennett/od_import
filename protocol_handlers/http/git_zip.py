@@ -69,7 +69,7 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         config.password = ""
     if 'proxy' not in config.__dict__:
         config.proxy = {}
-    elif 'User-agent' not in config.headers:
+    if 'User-agent' not in config.headers:
         config.headers['User-agent'] = 'Python-urllib/3.x'
     if config.proxy and 'url' in config.proxy:
         req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
