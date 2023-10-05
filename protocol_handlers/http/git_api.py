@@ -68,10 +68,26 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         config.proxy = {}
     if 'User-agent' not in config.headers:
         config.headers['User-agent'] = 'Python-urllib/3.x'
+    if 'verify' not in config.__dict__:
+        config.verify = True
+    if 'ca_file' not in config.__dict__:
+        config.ca_file = None
+    if 'ca_data' not in config.__dict__:
+        config.ca_data = None
     if config.proxy and 'url' in config.proxy:
         req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
+    elif url.startswith("https://"):
+        if not config.verify:
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+        elif config.ca_file or config.ca_data:
+            ssl_context = ssl.create_default_context(cafile=config.ca_file, cadata=config.ca_data)
+        else:
+            ssl_context = None
+        req_handler = HTTPSHandler(context=ssl_context)
     else:
-        req_handler = ProxyHandler({})
+        req_handler = HTTPHandler()
     req_opener = build_opener(req_handler)
     if config.headers:
         req_opener.addheaders = [(header, value) for header, value in config.headers.items()]

@@ -50,25 +50,34 @@ with od_import.remote_source('http://my-packages.local/site-packages', config=co
   import package
 ```
 
-### Load package/module via GITHUB repo (uses github.com and raw.githubusercontent.com)
+### Load package/module via GITHUB repo (uses github.com and raw.githubusercontent.com) - github example
 
 ```python
-with od_import.remote_source('github://rkbennett/py3memimporter'):
+config={"type": "git", "git": "github", "user": "rkbennett", "repo": "py3memimporter"}
+with od_import.remote_source('https://github.com', config=config):
   import py3memimporter
+```
+
+### Load package/module via GITHUB repo - gitlab example
+
+```python
+config={"type": "git", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject", "api_key": "glpat_1234567890"}
+with od_import.remote_source('https://my-gitlab.local', config=config):
+  import project_package
 ```
 
 ### Load package/module via repo ZIP - github example
 
 ```python
-config = config={"type": "git_zip", "git": "github", "user": "naksyn", "repo": "PythonMemoryModule"}
+config={"type": "git_zip", "git": "github", "user": "naksyn", "repo": "PythonMemoryModule"}
 with od_import.remote_source('https://github.com', config=config):
-  import py3memimporter
+  import pythonmemorymodule
 ```
 
 ### Load package/module via repo ZIP - gitlab example
 
 ```python
-config = config={"type": "git_zip", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject", "api_key": "glpat_1234567890"}
+config={"type": "git_zip", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject", "api_key": "glpat_1234567890"}
 with od_import.remote_source('https://gitlab.local', config=config):
   import myrepo_package
 ```
@@ -146,17 +155,9 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `verify` (enable/disable certificate verification for https certificates, defaults to `True`)
 * `ca_file` (path to ca file for certificate trust)
 * `ca_data` (string containing one more concatinated ca certificates)
-* `type` (one of dir, git_zip, or git_api; currently defaults to dir)
-* `api_key` (only used for git_zip and git_api types)
-* `git` (only accepts `gitlab` and `github` currently; only used for git_zip and git_api types)
-
-#### GITHUB
-
-* `user`
-* `password`
-* `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
-* `proxy` (Currently supports unauthenticated only)
-* `api_key`
+* `type` (one of dir, git, git_zip, or git_api; currently defaults to dir)
+* `api_key` (only used for git, git_zip, and git_api types)
+* `git` (only accepts `git`, `gitlab`, and `github` currently; only used for git_zip and git_api types)
 
 #### SMB
 
@@ -187,12 +188,9 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
-* `gitlab helper`
 * `pypi helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
-
-### GITHUB handler
 
 ### SMB handler
 
