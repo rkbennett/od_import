@@ -68,17 +68,25 @@ with od_import.remote_source('https://github.com', config=config):
 ### Load package/module via repo ZIP - gitlab example
 
 ```python
-config = config={"type": "git_zip", "git": "gitlab", "group": "mygroup", "project": "myproject", "repo": "myrepo", "api_key": "glpat_1234567890"}
+config = config={"type": "git_zip", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject", "api_key": "glpat_1234567890"}
 with od_import.remote_source('https://gitlab.local', config=config):
   import myrepo_package
 ```
 
-### Load package/module via GITHUB repo API (uses api.github.com, would recommend you use the api_key config or you will be severely rate limited)
+### Load package/module via repo API (would recommend you use the api_key config or you will be severely rate limited) - github example
 
 ```python
-config={"api_key":"github_pat_somelongapikeystring"}
-with od_import.remote_source('github_api://rkbennett/py3memimporter', config=config):
+config={"api_key":"github_pat_somelongapikeystring", "type": "git_api", "git": "github", "user": "myuser", "repo": "myrepo"}
+with od_import.remote_source('https://api.github.com', config=config):
   import py3memimporter
+```
+
+### Load package/module via repo API (would recommend you use the api_key config or you will be severely rate limited) - gitlab example
+
+```python
+config={"api_key":"glpat_1234567890", "type": "git_api", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject"}
+with od_import.remote_source('https://my-gitlab.local', config=config):
+  import mypackage
 ```
 
 ### Load package/module via FTP location
