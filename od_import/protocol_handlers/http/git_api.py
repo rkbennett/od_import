@@ -60,7 +60,7 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         if 'project_id' not in config.__dict__:
             config.project_id = None
     if 'branch' not in config.__dict__:
-        if config.git == "gitlab":
+        if config.git == "github":
             config.branch = None
         else:
             config.branch = "main"

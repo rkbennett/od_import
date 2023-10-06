@@ -230,7 +230,6 @@ If you are importing from a zip which requires a password, you must provide the 
 * `More documentation`
 * `Pip handler`
 * `NFS handler`
-* `Wrappers for git http helpers`
 * `Packaging`
 * `Testing for other python distros`
 
