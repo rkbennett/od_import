@@ -5,6 +5,7 @@ from . import (
     git,
     git_zip,
     git_api,
+    pypi,
     directory_of
 )
 
@@ -33,6 +34,8 @@ def http(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
             helper = git_zip.git_zip
         elif config.type == "git_api":
             helper = git_api.git_api
+        elif config.type == "pypi":
+            helper = pypi.pypi
     if not helper:
         raise ImportError("An invalid 'type' was provided in 'http' config object")
     return helper(url, path, path_cache, cache_update, config)

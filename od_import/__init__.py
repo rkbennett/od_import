@@ -273,6 +273,14 @@ class ODImporter(object):
                                 self.modules[fullname]['package'] = True
                                 self.modules[fullname]['cExtension'] = False
                                 return self
+                    if f"{path}/" in self.path_cache:
+                        # This may be an odd package implementation which doesn't use an __init__ file (looking at you pywin32)
+                        self.modules[fullname] = {}
+                        self.modules[fullname]['content'] = b""
+                        self.modules[fullname]['filepath'] = None
+                        self.modules[fullname]['package'] = True
+                        self.modules[fullname]['cExtension'] = False
+                        return self
                 else:
                     if (("/".join(path.split("/")[:depth]) + "/" in self.path_cache) or ("/".join(path.split("/")[:depth]) in self.path_cache)):
                         # Try to update cache
@@ -300,8 +308,11 @@ class ODImporter(object):
         mod = types.ModuleType(fullname)
 
         mod.__loader__ = self
-        mod.__file__ = import_module['filepath']
-        mod.__path__ = "/".join(import_module['filepath'].split("/")[:-1]) + "/"
+        if self.modules[fullname]['filepath']:
+            mod.__file__ = import_module['filepath']
+            mod.__path__ = "/".join(import_module['filepath'].split("/")[:-1]) + "/"
+        else:
+            mod.__path__ = f"{self.url}/{fullname}/"
         if import_module['package']:
             mod.__package__ = fullname
         else:
@@ -336,7 +347,10 @@ class ODImporter(object):
             mod.__name__ = fullname
             sys.modules[fullname] = mod
         else:
-            self.path = mod.__file__
+            if self.modules[fullname]['filepath']:
+                self.path = mod.__file__
+            else:
+                self.path = f"{self.url}/{fullname}/"
             sys.modules[fullname] = mod
             exec(import_module['content'], mod.__dict__)
         if fullname in self.modules:
@@ -458,6 +472,38 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
     finally:
         remove_remote_source(import_hook.url)
 
+def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
+    config = {
+        "package": package,
+        "type": "pypi""
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    url = "https://pypi.org/pypi"
+    add_remote_source(url, config=config)
+
+@contextmanager
+"package": {"name":"psutil","release":"5.9.5"}, "type": "pypi"
+def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
+    config = {
+        "package": package,
+        "type": "pypi"
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    url = "https://pypi.org/pypi"
+    import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
+    try:
+        yield
+    except ImportError as e:
+        raise e
+    finally:
+        remove_remote_source(import_hook.url)
+
 @contextmanager
 def remote_source(url: str, INSECURE: bool=False, zip_password: bytes=None, config: dict={}):
     """
@@ -473,4 +519,3 @@ def remote_source(url: str, INSECURE: bool=False, zip_password: bytes=None, conf
         raise e
     finally:
         remove_remote_source(import_hook.url)
-

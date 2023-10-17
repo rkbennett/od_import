@@ -98,6 +98,14 @@ with od_import.remote_source('https://my-gitlab.local', config=config):
   import mypackage
 ```
 
+### Load package/module via pypi api
+
+```python
+config={"type": "pypi", "package": [{"name": "psutil", "release": "5.9.5"}]}
+with od_import.remote_source('https://pypi.org/pypi', config=config):
+  import psutil
+```
+
 ### Load package/module via github wrapper
 
 ```python
@@ -110,6 +118,13 @@ with od_import.github("rkbennett", "py3memimporter", branch="main", git_type="gi
 ```python
 with od_import.gitlab("https://my-gitlab.local", "mygroup", "myproject", branch="main", git_type="git_api", api_key="glpat_1234567890", verify=False):
   import py3memimporter
+```
+
+### Load package/module via pypi wrapper
+
+```python
+with od_import.gitlab(package=[{"name": "psutil", "release": "5.9.5"}], verify=False):
+  import psutil
 ```
 
 ### Load package/module via FTP location
@@ -172,6 +187,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `type` (one of dir, git, git_zip, or git_api; currently defaults to dir)
 * `api_key` (only used for git, git_zip, and git_api types)
 * `git` (only accepts `git`, `gitlab`, and `github` currently; only used for git_zip and git_api types)
+* `package` (only used for pypi, can be a str of the package name, a dict of the package name and release or a list of package dicts)
 
 #### SMB
 
@@ -202,7 +218,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
-* `pypi helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
 
@@ -235,8 +250,7 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ## Gotchas
 
-* This has currently only been tested on windows 10 and 11 with python 3.10, but in theory should work on any version 3.4-3.11
-* If you update py3memimporter's shellcode to contain the version of _memimporter which is compatibly with 3.0-3.3 then, in theory, those versions should work as well.
+* This has currently only been tested on windows 10 and 11 with python 3.10, but in theory should work on any version 3.6-3.11
 * 3.12+ is not currently supported due to a functional change in the import protocol which has been depricated for some time, but was finally removed in 3.12.
 
 ## Special Thanks
