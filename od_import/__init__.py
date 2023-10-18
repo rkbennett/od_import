@@ -248,6 +248,7 @@ class ODImporter(object):
                 if "/".join(path.split("/")[:depth]) == path:
                     mods = [mod for mod in self.path_cache if mod.startswith(path)]
                     c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                    pyc_mods = [mod for mod in self.path_cache if mod.startswith(path) and mod.split("/")[depth - 1].endswith(".pyc")]
                     if mods:
                         if path + ".py" in mods:
                             self.modules[fullname] = {}
@@ -273,6 +274,12 @@ class ODImporter(object):
                                 self.modules[fullname]['package'] = True
                                 self.modules[fullname]['cExtension'] = False
                                 return self
+                        elif path + ".pyc" in mods:
+                            self.modules[fullname] = {}
+                            self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + pyc_mods[0], path_cache=self.path_cache, config=self.config)
+                            self.modules[fullname]['filepath'] = self.url + "/" + pyc_mods[0]
+                            self.modules[fullname]['package'] = False
+                            self.modules[fullname]['cExtension'] = False
                     if f"{path}/" in self.path_cache:
                         # This may be an odd package implementation which doesn't use an __init__ file (looking at you pywin32)
                         self.modules[fullname] = {}
@@ -352,6 +359,17 @@ class ODImporter(object):
             else:
                 self.path = f"{self.url}/{fullname}/"
             sys.modules[fullname] = mod
+            if mod.__file__.endswith(".pyc"):
+                try:
+                    decompile_content = marshal.loads(import_module['content'][16:])
+                except:
+                    logging.warn(f"Failed to marshal {mod.__file__} with offset of 16")
+                    try:
+                        decompile_content = marshal.loads(import_module['content'][12:])
+                    except:
+                        logging.warn(f"Failed to marshal {mod.__file__} with offset of 12")
+                        decompile_content = marshal.loads(import_module['content'][8:])
+                import_module['content'] = decompile_content
             exec(import_module['content'], mod.__dict__)
         if fullname in self.modules:
             # release loaded module

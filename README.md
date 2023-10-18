@@ -123,7 +123,7 @@ with od_import.gitlab("https://my-gitlab.local", "mygroup", "myproject", branch=
 ### Load package/module via pypi wrapper
 
 ```python
-with od_import.gitlab(package=[{"name": "psutil", "release": "5.9.5"}], verify=False):
+with od_import.pypi(package=[{"name": "psutil", "release": "5.9.5"}], verify=False):
   import psutil
 ```
 
@@ -237,7 +237,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### Framework
 
-* `Support for pyc files`
 * `Python3.12+ support`
 
 ### Etc
