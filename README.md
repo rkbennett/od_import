@@ -231,14 +231,6 @@ If you are importing from a zip which requires a password, you must provide the 
 * `FTPS support`
 * `proxy support`
 
-### Zip handler
-
-### Tar handler
-
-### Framework
-
-* `Python3.12+ support`
-
 ### Etc
 
 * `More documentation`
@@ -250,7 +242,7 @@ If you are importing from a zip which requires a password, you must provide the 
 ## Gotchas
 
 * This has currently only been tested on windows 10 and 11 with python 3.10, but in theory should work on any version 3.6-3.11
-* 3.12+ is not currently supported due to a functional change in the import protocol which has been depricated for some time, but was finally removed in 3.12.
+* 3.12+ doesn't currently support compiled code, this functionality is waiting for a new version of py2exe for 3.12 support
 
 ## Special Thanks
 
