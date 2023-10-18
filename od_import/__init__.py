@@ -5,15 +5,14 @@ import types
 import marshal
 import logging
 from . import hooks
+import importlib.util
 from contextlib import contextmanager
 
-threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
-threedotfour = (sys.version_info.major == 3 and sys.version_info.minor >= 4)
+threedotsix = (sys.version_info.major == 3 and sys.version_info.minor < 12)
+threedottwelve = (sys.version_info.major == 3 and sys.version_info.minor >= 12)
 
-if threedotoh:
-    import importlib
-elif threedotfour:
-    import importlib.util
+if threedottwelve:
+    import importlib.machinery
 
 ########################## Check for _memimporter for pyd/dll support ##################
 try:
@@ -230,7 +229,96 @@ class ODImporter(object):
         Returns:
             raw contents of c extension"""
         return self.modules[fullname.replace("/",".")]['content']
-        
+    
+    def find_spec(self, fullname: str, path: str=None):
+        """
+        Description:
+            Determines if this import meta hook can load the requested module
+        Args:
+            fullname: name of module being imported
+            path: file path of module being imported
+        Returns:
+            ModuleSpec object if the module can be loaded or None if the module cannot be loaded
+        """
+        if self.path_cache:
+            depth = 1
+            path = fullname.replace(".","/")
+            package_spec = importlib.machinery.ModuleSpec(fullname, self)
+            if len(fullname.split('.')[:-1]) > 1:
+                pkg_name = '.'.join(fullname.split('.')[:-1])
+                while sys.modules[pkg_name].__package__ != pkg_name:
+                    pkg_name = '.'.join(pkg_name.split('.')[:-1])
+                package_spec.parent = pkg_name
+            else:
+                package_spec.parent = fullname.split('.')[0]
+            while depth <= len(path.split("/")):
+                if "/".join(path.split("/")[:depth]) == path:
+                    mods = [mod for mod in self.path_cache if mod.startswith(path)]
+                    c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                    pyc_mods = [mod for mod in self.path_cache if mod.startswith(path) and mod.split("/")[depth - 1].endswith(".pyc")]
+                    if mods:
+                        if path + ".py" in mods:
+                            self.modules[fullname] = {}
+                            self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + ".py", path_cache=self.path_cache, config=self.config)
+                            self.modules[fullname]['filepath'] = self.url + "/" + path + ".py"
+                            self.modules[fullname]['package'] = False
+                            self.modules[fullname]['cExtension'] = False
+                            package_spec.origin = self.modules[fullname]['filepath']
+                            package_spec.has_location = True
+                            return package_spec
+                        elif cExtensionImport and c_mods: # or mod.endswith('.so')): #not currently supporting *nix
+                            self.modules[fullname] = {}
+                            self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + c_mods[0], path_cache=self.path_cache, config=self.config)
+                            self.modules[fullname]['filepath'] = self.url + "/" + c_mods[0]
+                            self.modules[fullname]['package'] = False
+                            self.modules[fullname]['cExtension'] = True
+                            package_spec.origin = self.url + "/" + c_mods[0]
+                            package_spec.has_location = True
+                            return package_spec
+                        elif path + "/" in mods:
+                            # Let's try to update the cache
+                            self.proto_handler(self.url, path=path + "/", path_cache=self.path_cache, config=self.config)
+                            if path + "/__init__.py" in self.path_cache:
+                                self.modules[fullname] = {}
+                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + "/__init__.py", path_cache=self.path_cache, config=self.config)
+                                self.modules[fullname]['filepath'] = self.url + "/" + path + "/__init__.py"
+                                self.modules[fullname]['package'] = True
+                                self.modules[fullname]['cExtension'] = False
+                                package_spec.origin = self.url + "/" + path + "/__init__.py"
+                                package_spec.submodule_search_locations = self.url + "/" + path
+                                package_spec.has_location = True
+                                return package_spec
+                        elif path + ".pyc" in mods:
+                            self.modules[fullname] = {}
+                            self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + pyc_mods[0], path_cache=self.path_cache, config=self.config)
+                            self.modules[fullname]['filepath'] = self.url + "/" + pyc_mods[0]
+                            self.modules[fullname]['package'] = False
+                            self.modules[fullname]['cExtension'] = False
+                            package_spec.origin = self.url + "/" + pyc_mods[0]
+                            package_spec.has_location = True
+                            return package_spec
+                    if f"{path}/" in self.path_cache:
+                        # This may be an odd package implementation which doesn't use an __init__ file (looking at you pywin32)
+                        self.modules[fullname] = {}
+                        self.modules[fullname]['content'] = b""
+                        self.modules[fullname]['filepath'] = None
+                        self.modules[fullname]['package'] = True
+                        self.modules[fullname]['cExtension'] = False
+                        package_spec.origin = None
+                        package_spec.submodule_search_locations = self.url + "/" + path
+                        package_spec.has_location = True
+                        return package_spec
+                else:
+                    if (("/".join(path.split("/")[:depth]) + "/" in self.path_cache) or ("/".join(path.split("/")[:depth]) in self.path_cache)):
+                        # Try to update cache
+                        self.proto_handler(self.url, path="/".join(path.split("/")[:depth]) + "/", path_cache=self.path_cache, config=self.config)
+                        if not [mod for mod in self.path_cache if mod.startswith("/".join(path.split("/")[:depth]))]:
+                            # the path couldn't be matched at the current depth
+                            logging.info("%s couldn't be matched at the current depth" % "/".join(path.split("/")[:depth]))
+                            break
+                depth += 1
+        return None
+
     def find_module(self, fullname: str, path: str=None):
         """
         Description:
@@ -280,6 +368,7 @@ class ODImporter(object):
                             self.modules[fullname]['filepath'] = self.url + "/" + pyc_mods[0]
                             self.modules[fullname]['package'] = False
                             self.modules[fullname]['cExtension'] = False
+                            return self
                     if f"{path}/" in self.path_cache:
                         # This may be an odd package implementation which doesn't use an __init__ file (looking at you pywin32)
                         self.modules[fullname] = {}
@@ -363,11 +452,11 @@ class ODImporter(object):
                 try:
                     decompile_content = marshal.loads(import_module['content'][16:])
                 except:
-                    logging.warn(f"Failed to marshal {mod.__file__} with offset of 16")
+                    logging.info(f"Failed to marshal {mod.__file__} with offset of 16")
                     try:
                         decompile_content = marshal.loads(import_module['content'][12:])
                     except:
-                        logging.warn(f"Failed to marshal {mod.__file__} with offset of 12")
+                        logging.info(f"Failed to marshal {mod.__file__} with offset of 12")
                         decompile_content = marshal.loads(import_module['content'][8:])
                 import_module['content'] = decompile_content
             exec(import_module['content'], mod.__dict__)
@@ -493,7 +582,7 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
 def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
     config = {
         "package": package,
-        "type": "pypi""
+        "type": "pypi"
     }
     if proxy:
         config["proxy"] = proxy
@@ -503,7 +592,6 @@ def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, header
     add_remote_source(url, config=config)
 
 @contextmanager
-"package": {"name":"psutil","release":"5.9.5"}, "type": "pypi"
 def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
     config = {
         "package": package,
