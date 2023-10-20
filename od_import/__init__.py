@@ -267,8 +267,7 @@ class ODImporter(object):
                                 self.modules[fullname]['filepath'] = self.url + "/" + c_mods[0]
                                 self.modules[fullname]['package'] = False
                                 self.modules[fullname]['cExtension'] = True
-                                package_spec.origin = self.url + "/" + c_mods[0]
-                                package_spec.has_location = True
+                                package_spec = _frozen_importlib.ModuleSpec(fullname, self, origin=self.url + "/" + c_mods[0], is_package=False)
                                 return package_spec
                             elif path + "/" in mods:
                                 # Let's try to update the cache
@@ -340,7 +339,8 @@ class ODImporter(object):
             Args:
                 module: module being imported
             """
-            delattr(module, "__cached__")
+            if hasattr(module, "__cached__"):
+                delattr(module, "__cached__")
             spec = module.__spec__
             name = spec.name
             import_module = self.modules[name]
@@ -356,11 +356,16 @@ class ODImporter(object):
                             exec(boot_code, globals())
                     self._boot_code = []
             if import_module['cExtension']:
-                self.path = module.__file__
-                fpath = name.replace(".","/")
+                if not hasattr(module, '__builtins__'):
+                    module.__builtins__ = __builtins__
+                self.path = spec.origin
+                spec._set_fileattr = False
                 initname = f"PyInit_{name.split('.')[-1]}"
-                mod = _memimporter.import_module(name, fpath, initname, self._get_module_content, spec)
-                sys.modules[name] = module
+                mod = _memimporter.import_module(name, name, initname, self._get_module_content, spec)
+                mod.__spec__ = spec
+                mod.__file__ = spec.origin
+                mod.__loader__ = spec.loader
+                mod.__package__ = spec.parent
             else:
                 if self.modules[name]['filepath']:
                     self.path = module.__file__

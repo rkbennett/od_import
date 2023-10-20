@@ -2,7 +2,7 @@
 
 _Remote_, _in-memory_ Python _package/module_ importing **via HTTP/S, FTP, or SMB**
 
-## **Compatible with Python 3.6-3.11**
+## **Compatible with Python 3.6+**
 
 Inspired by [`httpimport`](https://github.com/operatorequals/httpimport).
 
@@ -233,7 +233,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### Etc
 
-* `More documentation`
 * `Pip handler`
 * `NFS handler`
 * `Packaging`
@@ -241,8 +240,7 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ## Gotchas
 
-* This has currently only been tested on windows 10 and 11 with python 3.10, but in theory should work on any version 3.6-3.11
-* 3.12+ doesn't currently support compiled code, this functionality is waiting for a new version of py2exe for 3.12 support
+* This has currently only been tested on windows 10 and 11 with python 3.10, but in theory should work on any version 3.6+
 
 ## Special Thanks
 
