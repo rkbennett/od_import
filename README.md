@@ -247,4 +247,5 @@ If you are importing from a zip which requires a password, you must provide the 
 * [natesubra](https://github.com/natesubra) - For challenging me to learn this stuff :D
 * [operatorequals](https://github.com/operatorequals) - For httpimport, which is where I cut my teeth working on import hooks
 * [desty2k](https://github.com/desty2k) - For Paker, which helped me figure out how to support packages with C extensions
-* [py2exe](https://github.com/py2exe) - For _memimporter as well as the hooking logic for dynamic patching
+* [py2exe](https://github.com/py2exe) - For the hooking logic for dynamic patching
+* [SeaHOH](https://github.com/SeaHOH) - For _memimporter
