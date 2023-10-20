@@ -6,6 +6,7 @@ import marshal
 import logging
 from . import hooks
 import importlib.util
+import _frozen_importlib
 from contextlib import contextmanager
 
 threedotsix = (sys.version_info.major == 3 and sys.version_info.minor < 12)
