@@ -218,6 +218,9 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
+* `dropbox helper`
+* `gitea helper`
+* `pastebin helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
 
