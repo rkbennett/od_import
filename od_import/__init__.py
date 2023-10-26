@@ -46,6 +46,16 @@ def http():
     from .protocol_handlers import http
     return http.http
 
+def pip_handler():
+    """ 
+    Description:
+        Handles loading of dependencies of pip protocol handler
+    Returns:
+        function: A function which handles pip-based imports
+    """
+    from .protocol_handlers import pip_handler
+    return pip_handler.pip_handler
+
 def smb():
     """ 
     Description:
@@ -92,13 +102,15 @@ def tar_handler():
 supported_protos = {
     "http": ["http","https"],
     "smb": ["smb"],
-    "ftp": ["ftp"]
+    "ftp": ["ftp"],
+    "pip": ["pip"]
 }
 
 proto_handlers = {
     "http": http,
     "smb": smb,
-    "ftp": ftp
+    "ftp": ftp,
+    "pip": pip_handler
 }
 
 archive_handlers = {
@@ -107,7 +119,12 @@ archive_handlers = {
 }
 
 secure_protos = [
-    "https"
+    "https",
+    "pip"
+]
+
+wrapper_protos = [
+    "pip"
 ]
 
 ########################## Config class ##############################
@@ -184,7 +201,7 @@ class ODImporter(object):
             function: A function which handles imports based on a matched protocol
         """
         uri_array = url.split("://")
-        if len(uri_array) != 2:
+        if len(uri_array) != 2 and uri_array[0] not in wrapper_protos:
             raise ValueError("%s is not a valid uri", url)
         proto = uri_array[0]
         for supported_proto in supported_protos:

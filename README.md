@@ -106,6 +106,14 @@ with od_import.remote_source('https://pypi.org/pypi', config=config):
   import psutil
 ```
 
+### Load package/module via pip (only tested on python 3.12)
+
+```python
+config={"package": ["psutil"]}
+with od_import.remote_source('pip', config=config):
+  import psutil
+```
+
 ### Load package/module via github wrapper
 
 ```python
@@ -206,6 +214,10 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `password` (defaults to "")
 * `proxy` (Not currently used)
 
+#### PIP
+
+* `package` (can be list of package name strings or package name string)
+
 ## INSECURE
 
 This is a boolean arg that is supplied to the hook constructor, which enables the use of insecure protocols (http, smb, ftp)
@@ -236,7 +248,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### Etc
 
-* `Pip handler`
 * `NFS handler`
 * `Packaging`
 * `Testing for other python distros`
