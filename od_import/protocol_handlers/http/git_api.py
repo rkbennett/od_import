@@ -45,13 +45,13 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         config.headers = {'User-agent':'Python-urllib/3.x'}
     if 'api_key' not in config.__dict__:
         config.api_key = None
-    if config.git == "github":
+    if config.git in ["github", "gitea"]:
         if 'user' not in config.__dict__:
-            raise KeyError("Missing required key 'user' when git type is 'github'")
+            raise KeyError(f"Missing required key 'user' when git type is '{config.git}'...")
         if 'repo' not in config.__dict__:
-            raise KeyError("Missing required key 'repo' when git type is 'github'...")
+            raise KeyError(f"Missing required key 'repo' when git type is '{config.git}'...")
         if config.api_key:
-            config.headers["Authorization"] =f"Bearer {config.api_key}"
+            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "gitlab" else f"token {config.api_key}"
     if config.git == "gitlab":
         if ('group' not in config.__dict__ or 'project' not in config.__dict__) and 'project_id' not in config.__dict__:
             raise KeyError("Missing required key(s) 'group' and 'project' required when git type is 'gitlab' and 'project_id' key not set...")
@@ -118,6 +118,14 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             if url_path:
                 url = url.replace(url_path, f"{urlencode(url_path.lstrip('/'))}")
                 url = f"{url}?ref={config.branch}"
+    elif config.git == "gitea":
+        if (url.endswith("/") or len(url.split("/")) == 3 and not path) or (path and path.endswith("/")):
+            url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/api/v1/repos/{config.user}/{config.repo}/contents?ref={config.branch}")
+            if path:
+                url = f"/{urlencode(path.rstrip('/'))}?".join(url.split("?"))
+        else:
+            url_path = url.split(url.split("/")[2])[1]
+            url = url.replace(url_path, f"/api/v1/repos/{config.user}/{config.repo}/contents/{urlencode(url_path)}?ref={config.branch}")
     resp = opener(url).read()
     resp_json = json.loads(resp)
     if isinstance(resp_json, dict):
@@ -125,7 +133,7 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     if cache_update:
         try:
             # attempt to parse links on the page
-            if config.git == "github":
+            if config.git in ["github", "gitea"]:
                 repo_files = [item['path'] if item['type'] == "file" else f"{item['path']}/" for item in json.loads(resp)]
             else:
                 repo_files = [item['path'] if item['type'] == "blob" else f"{item['path']}/" for item in json.loads(resp)]

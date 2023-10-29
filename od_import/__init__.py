@@ -625,7 +625,7 @@ def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key:
     finally:
         remove_remote_source(import_hook.url)
 
-def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
     config = {
         "group": group,
         "project": project,
@@ -648,6 +648,47 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
         "group": group,
         "project": project,
         "git": "gitlab",
+        "type": git_type
+    }
+    if branch:
+        config["branch"] = branch
+    if api_key:
+        config["api_key"] = api_key
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
+    try:
+        yield
+    except ImportError as e:
+        raise e
+    finally:
+        remove_remote_source(import_hook.url)
+
+def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+    config = {
+        "user": user,
+        "repo": repo,
+        "git": "gitea",
+        "type": git_type
+    }
+    if branch:
+        config["branch"] = branch
+    if api_key:
+        config["api_key"] = api_key
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    add_remote_source(url, INSECURE=INSECURE, config=config)
+
+@contextmanager
+def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+    config = {
+        "user": user,
+        "repo": repo,
+        "git": "gitea",
         "type": git_type
     }
     if branch:

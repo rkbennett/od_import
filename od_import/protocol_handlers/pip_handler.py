@@ -653,8 +653,6 @@ def pip_handler(url, path="", path_cache: list=[], cache_update: bool=True, conf
     """
     if 'package' not in config.__dict__:
         raise KeyError("Missing required key 'package'...")
-    if 'release' not in config.__dict__:
-        config.release = None
     if isinstance(config.package, list):
         for package in config.package:
             pipmain(["download", "--prefer-binary", package, "--dest=."])

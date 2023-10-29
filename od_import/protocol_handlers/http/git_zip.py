@@ -47,13 +47,13 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         config.headers = {'User-agent':'Python-urllib/3.x'}
     if 'api_key' not in config.__dict__:
         config.api_key = None
-    if config.git == "github":
+    if config.git in ["github", "gitea"]:
         if 'user' not in config.__dict__:
-            raise KeyError("Missing required key 'user' when git type is 'github'...")
+            raise KeyError(f"Missing required key 'user' when git type is '{config.git}'...")
         if 'repo' not in config.__dict__:
-            raise KeyError("Missing required key 'repo' when git type is 'github'...")
+            raise KeyError(f"Missing required key 'repo' when git type is '{config.git}'...")
         if config.api_key:
-            config.headers["Authorization"] =f"Bearer {config.api_key}"
+            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "gitlab" else f"token {config.api_key}"
     if config.git == "gitlab":
         if 'group' not in config.__dict__:
             raise KeyError("Missing required key 'group' when git type is 'gitlab'...")
@@ -102,6 +102,9 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         url = f"{url}/{config.user}/{config.repo}/archive/refs/heads/{config.branch}.zip"
     elif config.git == "gitlab":
         url = f"{url}/{config.group}/{config.project}/-/archive/{config.branch}/{config.project}-{config.branch}.zip"
+    elif config.git == "gitea":
+        top_level_dir = ""
+        url = f"{url}/{config.user}/{config.repo}/archive/{config.branch}.zip"
     if config.username:
         if config.password:
             creds = f"{quote(config.username)}:{quote(config.password)}@"
@@ -120,7 +123,12 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         tar_bytes = tarfile.open(fileobj=tar_io, mode='w:gz')
         files = [item for item in zip_bytes_read.infolist()][1:]
         for item in files:
-            tar_info = tarfile.TarInfo(name=item.filename.replace(f"{config.repo}-{config.branch}/", ""))
+            if config.git in ["github", "gitlab"]:
+                tar_info = tarfile.TarInfo(name=item.filename.replace(f"{config.repo}-{config.branch}/", ""))
+            elif config.git == "gitea":
+                if not top_level_dir:
+                    top_level_dir = item.filename.split("/")[0]
+                tar_info = tarfile.TarInfo(name=f"{top_level_dir}/".join(item.filename.split(f"{top_level_dir}/")[1:]))
             tar_info.size = item.file_size
             tar_info.mtime = time.mktime(tuple(item.date_time) +
                 (-1, -1, -1))

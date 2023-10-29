@@ -37,6 +37,7 @@ class LinkScrape(HTMLParser):
         self.data = []
         self.git = None
         self.repo = None
+        self.isFile = None
         self.branch = None
         self.fetch_data = False
 
@@ -74,6 +75,25 @@ class LinkScrape(HTMLParser):
                                 self.data.append(link)
                             except Exception as e:
                                 logging.error(e)
+        if self.git == "gitea":
+            if tag == 'a' or tag == 'svg':
+                for attr in attrs:
+                    if attr[0] == 'href' or attr[1] in ["svg octicon-file", "svg octicon-file-directory-fill"]:
+                        if attr[1] == "svg octicon-file-directory-fill":
+                            self.isFile = False
+                        elif attr[1] == "svg octicon-file":
+                            self.isFile = True
+                        if attr[1].startswith(f"{self.repo}/src/branch/{self.branch}"):
+                            if self.isFile:
+                                link = attr[1].replace(f"{self.repo}/src/branch/{self.branch}", f"{self.repo}/blob/{self.branch}")
+                            else:
+                                link = attr[1].replace(f"{self.repo}/src/branch/{self.branch}", f"{self.repo}/tree/{self.branch}")
+                            if 'data' not in dir(self):
+                                self.data = []
+                            try:
+                                self.data.append(link)
+                            except Exception as e:
+                                logging.error(e)
     
     def handle_data(self, data):
         if self.fetch_data:
@@ -101,13 +121,13 @@ def git(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
         config.headers = {'User-agent':'Python-urllib/3.x'}
     if 'api_key' not in config.__dict__:
         config.api_key = None
-    if config.git == "github":
+    if config.git in ["github", "gitea"]:
         if 'user' not in config.__dict__:
-            raise KeyError("Missing required key 'user' when git type is 'github'")
+            raise KeyError(f"Missing required key 'user' when git type is '{config.git}'...")
         if 'repo' not in config.__dict__:
-            raise KeyError("Missing required key 'repo' when git type is 'github'...")
+            raise KeyError(f"Missing required key 'repo' when git type is '{config.git}'...")
         if config.api_key:
-            config.headers["Authorization"] =f"Bearer {config.api_key}"
+            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "gitlab" else f"token {config.api_key}"
     elif config.git == "gitlab":
         if ('group' not in config.__dict__ or 'project' not in config.__dict__):
             raise KeyError("Missing required key(s) 'group' and 'project' required when git type is 'gitlab'")
@@ -153,11 +173,15 @@ def git(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
         else:
             url = url.replace("https://github.com", f"https://github.com/{config.user}/{config.repo}/tree/{config.branch}/")
     elif config.git == "gitlab":
-        raise ImportError("gitlab not currently supported")
         if (url.endswith("/") or len(url.split("/")) == 3 and not path) or (path and path.endswith("/")):
             url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/{config.group}/{config.project}/-/tree/{config.branch}")
         else:
             url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/{config.group}/{config.project}/-/raw/{config.branch}")
+    elif config.git == "gitea":
+        if (url.endswith("/") or len(url.split("/")) == 3 and not path) or (path and path.endswith("/")):
+            url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/{config.user}/{config.repo}/src/branch/{config.branch}/")
+        else:
+            url = url.replace(url.split("/")[2], f"{url.split('/')[2]}/{config.user}/{config.repo}/raw/branch/{config.branch}/")
     if path:
         url = url + path
     if config.username:
@@ -172,8 +196,8 @@ def git(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
         try:
             # attempt to parse links on the page
             link_parser = LinkScrape()
-            if config.git == "github":
-                link_parser.git = "github"
+            if config.git in ["github", "gitea"]:
+                link_parser.git = config.git
                 file_path = f"{config.user}/{config.repo}/blob/{config.branch}"
                 folder_path = f"{config.user}/{config.repo}/tree/{config.branch}"
             elif config.git == "gitlab":

@@ -128,6 +128,13 @@ with od_import.gitlab("https://my-gitlab.local", "mygroup", "myproject", branch=
   import py3memimporter
 ```
 
+### Load package/module via gitea wrapper
+
+```python
+with od_import.gitea("http://my-gitea.local", "rkbennett", "py3memimporter", branch="main", git_type="git", INSECURE=True):
+  import py3memimporter
+```
+
 ### Load package/module via pypi wrapper
 
 ```python
@@ -185,7 +192,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 
 #### HTTP/S
 
-* `user`
+* `username`
 * `password`
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
@@ -194,8 +201,14 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `ca_data` (string containing one more concatinated ca certificates)
 * `type` (one of dir, git, git_zip, or git_api; currently defaults to dir)
 * `api_key` (only used for git, git_zip, and git_api types)
-* `git` (only accepts `git`, `gitlab`, and `github` currently; only used for git_zip and git_api types)
+* `git` (only accepts `gitea`, `gitlab`, and `github` currently; only used for git_zip and git_api types)
 * `package` (only used for pypi, can be a str of the package name, a dict of the package name and release or a list of package dicts)
+* `user` (only used for github and gitea, owner of the target repo)
+* `repo` (only used for github and gitea, the target repo)
+* `group` (only used for gitlab, the full group path for the target project -- this includes subgroups)
+* `project` (only used for gitlab, the target project)
+* `branch` (only used for gitlab, github, and gitea, the desired branch of the target repo/project)
+
 
 #### SMB
 
@@ -231,7 +244,6 @@ If you are importing from a zip which requires a password, you must provide the 
 ### HTTP handler
 
 * `dropbox helper`
-* `gitea helper`
 * `pastebin helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
