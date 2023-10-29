@@ -255,7 +255,6 @@ If you are importing from a zip which requires a password, you must provide the 
 ### FTP handler
 
 * `authenticated testing (should work, only tested anonymous so far)`
-* `FTPS support`
 * `proxy support`
 
 ### Etc

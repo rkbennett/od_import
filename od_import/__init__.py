@@ -102,7 +102,7 @@ def tar_handler():
 supported_protos = {
     "http": ["http","https"],
     "smb": ["smb"],
-    "ftp": ["ftp"],
+    "ftp": ["ftp", "ftps"],
     "pip": ["pip"]
 }
 
@@ -120,6 +120,7 @@ archive_handlers = {
 
 secure_protos = [
     "https",
+    "ftps",
     "pip"
 ]
 

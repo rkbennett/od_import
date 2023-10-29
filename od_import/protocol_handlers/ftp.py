@@ -1,7 +1,7 @@
 import io
 import sys
 import logging
-from ftplib import FTP
+from ftplib import FTP, FTP_TLS
 
 threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
 threedotfour = (sys.version_info.major == 3 and sys.version_info.minor >= 4)
@@ -21,7 +21,7 @@ def ftp(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
     return:
         bytes of file content or empty bytes object
     """
-    stripped_proto = url.split("://")[-1]
+    proto, stripped_proto = url.split("://")
     split_binding = stripped_proto.split("/")
     hostbinding = split_binding[0]
     if len(split_binding) > 1:
@@ -53,7 +53,11 @@ def ftp(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
     if config.port:
         conn_args['port'] = config.port
 
-    with FTP() as ftp:
+    if proto == "ftps":
+        ftp_class = FTP_TLS
+    else:
+        ftp_class = FTP
+    with ftp_class() as ftp:
         ftp.connect(**conn_args)
         ftp.login(**auth_args)
 
