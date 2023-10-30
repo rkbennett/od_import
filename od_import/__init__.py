@@ -229,6 +229,8 @@ class ODImporter(object):
         mth = getattr(hooks, hookname, None)
         if mth:
             mth(self, mod, path, self.unique_proto_handler, self.unique_proto_config)
+            return mod.__name__
+        return None
 
     def add_bootcode(self, code: str):
         """
@@ -511,11 +513,11 @@ class ODImporter(object):
 
         # Handle dynamic patching, if required
         if mod.__name__ not in self.bootcode_added:
-            self.hook(mod, self.url)
+            hooked_module = self.hook(mod, self.url)
             if self._boot_code:
                 self.bootcode_added.append(mod.__name__)
                 for boot_code in self._boot_code:
-                    if mod.__name__ == mod.__package__:
+                    if mod.__name__ == hooked_module:
                         exec(boot_code, globals())
                 self._boot_code = []
     
@@ -549,8 +551,12 @@ class ODImporter(object):
                 import_module['content'] = decompile_content
             exec(import_module['content'], mod.__dict__)
         if fullname in self.modules:
-            # release loaded module
-            self.modules.pop(fullname)
+            if mod.__name__ not in self.bootcode_added:
+                # release loaded 
+                self.modules.pop(fullname)
+            elif 'content' in self.modules[fullname]:
+                # release loaded module content
+                self.modules[fullname].pop('content')
         return mod
 
 
