@@ -260,7 +260,7 @@ class ODImporter(object):
             Returns:
                 ModuleSpec object if the module can be loaded or None if the module cannot be loaded
             """
-            if self.path_cache:
+            if self.path_cache and fullname not in self.excludes:
                 depth = 1
                 path = fullname.replace(".","/")
                 package_spec = importlib.machinery.ModuleSpec(fullname, self)
@@ -417,7 +417,7 @@ class ODImporter(object):
         Returns:
             self if the module can be loaded or None if the module cannot be loaded
         """
-        if self.path_cache:
+        if self.path_cache and fullname not in self.excludes:
             depth = 1
             path = fullname.replace(".","/")
             while depth <= len(path.split("/")):
@@ -554,7 +554,7 @@ class ODImporter(object):
         return mod
 
 
-def add_remote_source(url: str, INSECURE: bool=False, return_importer: bool=False, zip_password: bytes=None, config: dict={}):
+def add_remote_source(url: str, INSECURE: bool=False, excludes: list=[], return_importer: bool=False, zip_password: bytes=None, config: dict={}):
     """
     Description:
         Creates an ODImporter object and inserts it into the first entry of sys.meta_path
