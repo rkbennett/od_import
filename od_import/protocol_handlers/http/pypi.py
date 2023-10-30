@@ -71,7 +71,7 @@ def match_distro(package):
             if len(cpy_vers) == 2:
                 cpy_vers = cpy_vers.replace(cpy_vers[0], f"{cpy_vers[0]}0")
             distro['cpy_vers'] = int(cpy_vers)
-    package = sorted(package, key=operator.itemgetter('cpy_vers'))
+    package = sorted(package, key=operator.itemgetter('cpy_vers'), reverse=True)
     for distro in package:
         if distro['packagetype'] == "sdist":
             tarball = distro['url']
