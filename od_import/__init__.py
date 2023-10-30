@@ -631,7 +631,8 @@ def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: s
         "group": group,
         "project": project,
         "git": "gitlab",
-        "type": git_type
+        "type": git_type,
+        "verify": verify
     }
     if branch:
         config["branch"] = branch
@@ -649,7 +650,8 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
         "group": group,
         "project": project,
         "git": "gitlab",
-        "type": git_type
+        "type": git_type,
+        "verify": verify
     }
     if branch:
         config["branch"] = branch
@@ -672,7 +674,8 @@ def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="g
         "user": user,
         "repo": repo,
         "git": "gitea",
-        "type": git_type
+        "type": git_type,
+        "verify": verify
     }
     if branch:
         config["branch"] = branch
@@ -690,7 +693,8 @@ def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git",
         "user": user,
         "repo": repo,
         "git": "gitea",
-        "type": git_type
+        "type": git_type,
+        "verify": verify
     }
     if branch:
         config["branch"] = branch
@@ -711,7 +715,8 @@ def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git",
 def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
     config = {
         "package": package,
-        "type": "pypi"
+        "type": "pypi",
+        "verify": verify
     }
     if proxy:
         config["proxy"] = proxy
@@ -724,7 +729,8 @@ def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, header
 def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
     config = {
         "package": package,
-        "type": "pypi"
+        "type": "pypi",
+        "verify": verify
     }
     if proxy:
         config["proxy"] = proxy
