@@ -259,6 +259,7 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### Etc
 
+* `Add obfuscator framework`
 * `NFS handler`
 * `Packaging`
 * `Testing for other python distros`
