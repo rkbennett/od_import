@@ -243,6 +243,7 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
+* `s3 helper`
 * `dropbox helper`
 * `pastebin helper`
 * `bitbucket helper`
