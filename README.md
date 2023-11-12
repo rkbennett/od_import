@@ -114,6 +114,14 @@ with od_import.remote_source('pip', config=config):
   import psutil
 ```
 
+### Load module via pastebin 
+
+```python
+config = {'type':'pastebin', 'visibility': 'passworded', 'paste_key': 'PaSt3Key', "module": "foo", "developer_key": "mydeveloperkey", "user_key": "myuserkey", "paste_password": "foobarbaz"}
+with od_import.remote_source('https://pastebin.com', config=config):
+  import foo
+```
+
 ### Load package/module via github wrapper
 
 ```python
@@ -208,6 +216,12 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `group` (only used for gitlab, the full group path for the target project -- this includes subgroups)
 * `project` (only used for gitlab, the target project)
 * `branch` (only used for gitlab, github, and gitea, the desired branch of the target repo/project)
+* `visibility` (only used for pastebin, must be one of `public`, `private`, `unlisted`, `burn`, or `passworded`)
+* `module` (only used for pastebin, the fully-qualified name of the module you wish to import the paste as)
+* `paste_key` (only used for pastebin, the id of the paste)
+* `developer_key` (only used for pastebin when `visibility` set to `private`, `burn` or `passworded`)
+* `user_key` (only used for pastebin when `visibility` set to `private`, `burn` or `passworded`)
+* `paste_password` (only used for pastebin when `visibility` set to `passworded`)
 
 
 #### SMB
@@ -244,7 +258,6 @@ If you are importing from a zip which requires a password, you must provide the 
 ### HTTP handler
 
 * `dropbox helper`
-* `pastebin helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
 

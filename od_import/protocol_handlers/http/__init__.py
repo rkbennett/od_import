@@ -6,7 +6,8 @@ from . import (
     git_zip,
     git_api,
     pypi,
-    directory_of
+    directory_of,
+    pastebin
 )
 
 ########################## Protocol Handlers #########################
@@ -36,6 +37,8 @@ def http(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
             helper = git_api.git_api
         elif config.type == "pypi":
             helper = pypi.pypi
+        elif config.type == "pastebin":
+            helper = pastebin.pastebin
     if not helper:
         raise ImportError("An invalid 'type' was provided in 'http' config object")
     return helper(url, path, path_cache, cache_update, config)
