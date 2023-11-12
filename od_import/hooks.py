@@ -164,7 +164,6 @@ import os
 import sys
 import ctypes
 import importlib
-import _memimporter
 import {proto_handler}
 import {proto_config}
 from cffi import FFI
