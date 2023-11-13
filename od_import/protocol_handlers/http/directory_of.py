@@ -18,7 +18,7 @@ from urllib.request import (
 )
 from urllib.error import (
     HTTPError,
-    URLError,
+    URLError
 )
 
 try:
@@ -127,7 +127,7 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     if path:
         url = "/".join([url, path])
 
-    for attempt in range(GET_FILE_MAX_ATTEMPTS):  # Cambia 5 al número de intentos que deseas realizar
+    for attempt in range(GET_FILE_MAX_ATTEMPTS):
         if not requests:
             try:
                 resp = opener(url).read()
