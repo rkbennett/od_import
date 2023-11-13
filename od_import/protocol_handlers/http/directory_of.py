@@ -124,7 +124,6 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
 
     e = None
     for attemps in range(GET_FILE_MAX_ATTEMPTS):
-        
         try:
             resp = opener(url).read()
             break
