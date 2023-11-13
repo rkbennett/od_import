@@ -122,21 +122,20 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     if path:
         url = "/".join([url, path])
 
-    e = None
     for attemps in range(GET_FILE_MAX_ATTEMPTS):
         try:
             resp = opener(url).read()
             break
         except IncompleteRead as e:
             logging.info(e)
+            if attemps == GET_FILE_MAX_ATTEMPTS - 1:
+                raise e
 
         try:
             time.sleep(GET_FILE_MAX_WAIT)
-        except OSError as e: # Sometimes sleep raises an OSError
+        except OSError as e:
             logging.error(e)
             continue
-    else:
-        raise e
 
     if cache_update:
         try:
