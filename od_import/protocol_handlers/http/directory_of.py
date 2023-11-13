@@ -20,6 +20,8 @@ from urllib.error import (
     URLError
 )
 
+import requests
+
 ########################## link parser ###############################
 
 class LinkScrape(HTMLParser):
@@ -112,7 +114,7 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     if path:
         url = "/".join([url, path])
-    resp = opener(url).read()
+    resp = requests.get(url).content
     if cache_update:
         try:
             # attempt to parse links on the page
