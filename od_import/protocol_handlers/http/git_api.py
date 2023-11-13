@@ -5,9 +5,6 @@ import logging
 from base64 import b64decode
 from html.parser import HTMLParser
 
-threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
-threedotfour = (sys.version_info.major == 3 and sys.version_info.minor >= 4)
-
 from urllib.request import (
     urlopen,
     Request,
