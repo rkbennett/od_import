@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 
 threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
 threedotfour = (sys.version_info.major == 3 and sys.version_info.minor >= 4)
+threedotseven = (sys.version_info.major == 3 and sys.version_info.minor >= 7)
 
 from urllib.request import (
     urlopen,
@@ -27,12 +28,15 @@ except ImportError:
     from http.client import IncompleteRead
 
 try:
+    if not threedotseven:
+        raise ImportError
     import requests
     from requests.exceptions import RequestException
 except ImportError:
     requests = None
 
 GET_FILE_MAX_ATTEMPTS = 3
+GET_FILE_MAX_WAIT = 0.5
 
 ########################## link parser ###############################
 
@@ -127,14 +131,15 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     if path:
         url = "/".join([url, path])
 
-    for attempt in range(GET_FILE_MAX_ATTEMPTS):
+    attemps = 0
+    while (attemps < GET_FILE_MAX_ATTEMPTS):
         if not requests:
             try:
                 resp = opener(url).read()
                 break
             except IncompleteRead as e:
                 logging.info(e)
-                if attempt == GET_FILE_MAX_ATTEMPTS - 1:
+                if attemps == GET_FILE_MAX_ATTEMPTS - 1:
                     raise e
         else:
             try:
@@ -144,12 +149,12 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
                 break
             except RequestException as e:
                 logging.info(e)
-                if attempt == GET_FILE_MAX_ATTEMPTS - 1:
+                if attemps == GET_FILE_MAX_ATTEMPTS - 1:
                     raise e
 
         try:
-            time.sleep(0.5)
-        except OSError as e:
+            time.sleep(GET_FILE_MAX_WAIT)
+        except OSError as e: # Sometimes sleep raises an OSError
             logging.error(e)
             continue
     
