@@ -7,9 +7,6 @@ from html.parser import HTMLParser
 GET_FILE_MAX_ATTEMPTS = 3
 GET_FILE_MAX_WAIT = 0.5
 
-threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
-threedotfour = (sys.version_info.major == 3 and sys.version_info.minor >= 4)
-
 from urllib.request import (
     urlopen,
     Request,
