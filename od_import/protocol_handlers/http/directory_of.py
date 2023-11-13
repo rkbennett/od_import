@@ -1,6 +1,7 @@
 import sys
 import ssl
 import logging
+import time
 from html.parser import HTMLParser
 
 threedotoh = (sys.version_info.major == 3 and sys.version_info.minor < 4)
@@ -17,10 +18,21 @@ from urllib.request import (
 )
 from urllib.error import (
     HTTPError,
-    URLError
+    URLError,
 )
 
-import requests
+try:
+    from httplib import IncompleteRead
+except ImportError:
+    from http.client import IncompleteRead
+
+try:
+    import requests
+    from requests.exceptions import RequestException
+except ImportError:
+    requests = None
+
+GET_FILE_MAX_ATTEMPTS = 3
 
 ########################## link parser ###############################
 
@@ -114,7 +126,33 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     if path:
         url = "/".join([url, path])
-    resp = requests.get(url).content
+
+    for attempt in range(GET_FILE_MAX_ATTEMPTS):  # Cambia 5 al número de intentos que deseas realizar
+        if not requests:
+            try:
+                resp = opener(url).read()
+                break
+            except IncompleteRead as e:
+                logging.info(e)
+                if attempt == GET_FILE_MAX_ATTEMPTS - 1:
+                    raise e
+        else:
+            try:
+                resp = requests.get(url, verify=config.verify, headers=config.headers)
+                resp.raise_for_status()
+                resp = resp.content
+                break
+            except RequestException as e:
+                logging.info(e)
+                if attempt == GET_FILE_MAX_ATTEMPTS - 1:
+                    raise e
+
+        try:
+            time.sleep(0.5)
+        except OSError as e:
+            logging.error(e)
+            continue
+    
     if cache_update:
         try:
             # attempt to parse links on the page
