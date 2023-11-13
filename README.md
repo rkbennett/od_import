@@ -282,6 +282,10 @@ If you are importing from a zip which requires a password, you must provide the 
 
 * This has currently only been tested on windows 10 and 11 with python 3.10-3.12, but in theory should work on any version 3.6+
 
+## Contributors
+
+* [boludoz](https://github.com/boludoz) - gitignore and setup.py
+
 ## Special Thanks
 
 * [natesubra](https://github.com/natesubra) - For challenging me to learn this stuff :D
