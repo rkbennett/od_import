@@ -8,6 +8,7 @@ import zipfile
 import tarfile
 import operator
 import platform
+import http.client
 from base64 import b64decode
 from html.parser import HTMLParser
 
@@ -59,6 +60,13 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         config.username = ""
     if 'password' not in config.__dict__:
         config.password = ""
+    if 'http_version' in config.__dict__:
+        if config.http_version in ['1.0', '1.1']:
+            set_http_version = True
+            http.client.HTTPConnection._http_vsn = int(config.http_version.replace('.',''))
+            http.client.HTTPConnection._http_vsn_str = f"HTTP/{config.http_version}"
+    else:
+        set_http_version = False
     if config.proxy and 'url' in config.proxy:
         req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
     elif url.startswith("https://"):
@@ -84,10 +92,17 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
             creds = f"{config.username}@"
         urlsplit = url.split('://')
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
-    if not method:
-        resp = opener(url)
-    elif method in ["PUT", "POST"]:
-        req = Request(url, method=method)
-        encoded_data = urlencode(data).encode('utf-8')
-        resp = opener(req, encoded_data)
+    try:
+        if not method:
+            resp = opener(url)
+        elif method in ["PUT", "POST"]:
+            req = Request(url, method=method)
+            encoded_data = urlencode(data).encode('utf-8')
+            resp = opener(req, encoded_data)
+    except Exception as e:
+        logging.warning(f"Encountered error during request: {e}")
+        raise e
+    if set_http_version:
+        http.client.HTTPConnection._http_vsn = 11
+        http.client.HTTPConnection._http_vsn_str = "HTTP/1.1"
     return resp
