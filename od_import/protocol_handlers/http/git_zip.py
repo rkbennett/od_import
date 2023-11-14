@@ -1,26 +1,10 @@
 import io
-import sys
-import ssl
-import json
 import time
 import logging
 import zipfile
 import tarfile
+from . import _core
 from html.parser import HTMLParser
-
-from urllib.request import (
-    urlopen,
-    Request,
-    HTTPHandler,
-    HTTPSHandler,
-    ProxyHandler,
-    build_opener,
-    quote
-)
-from urllib.error import (
-    HTTPError,
-    URLError
-)
 
 ########################## Protocol Handlers #########################
 
@@ -40,8 +24,6 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     repo = url.split("://")[1]
     if 'git' not in config.__dict__:
         raise KeyError("Missing required key 'git'...")
-    if 'headers' not in config.__dict__:
-        config.headers = {'User-agent':'Python-urllib/3.x'}
     if 'api_key' not in config.__dict__:
         config.api_key = None
     if config.git in ["github", "gitea"]:
@@ -50,7 +32,7 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         if 'repo' not in config.__dict__:
             raise KeyError(f"Missing required key 'repo' when git type is '{config.git}'...")
         if config.api_key:
-            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "gitlab" else f"token {config.api_key}"
+            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "github" else f"token {config.api_key}"
     if config.git == "gitlab":
         if 'group' not in config.__dict__:
             raise KeyError("Missing required key 'group' when git type is 'gitlab'...")
@@ -61,38 +43,6 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             config.headers["PRIVATE-TOKEN"] =f"{config.api_key}"
     if 'branch' not in config.__dict__:
         config.branch = "main"
-    if 'username' not in config.__dict__:
-        config.username = ""
-    if 'password' not in config.__dict__:
-        config.password = ""
-    if 'proxy' not in config.__dict__:
-        config.proxy = {}
-    if 'User-agent' not in config.headers:
-        config.headers['User-agent'] = 'Python-urllib/3.x'
-    if 'verify' not in config.__dict__:
-        config.verify = True
-    if 'ca_file' not in config.__dict__:
-        config.ca_file = None
-    if 'ca_data' not in config.__dict__:
-        config.ca_data = None
-    if config.proxy and 'url' in config.proxy:
-        req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
-    elif url.startswith("https://"):
-        if not config.verify:
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-        elif config.ca_file or config.ca_data:
-            ssl_context = ssl.create_default_context(cafile=config.ca_file, cadata=config.ca_data)
-        else:
-            ssl_context = None
-        req_handler = HTTPSHandler(context=ssl_context)
-    else:
-        req_handler = HTTPHandler()      
-    req_opener = build_opener(req_handler)
-    if config.headers:
-        req_opener.addheaders = [(header, value) for header, value in config.headers.items()]
-    opener = req_opener.open
     if len(repo.split("/")) == 2:
         url = url + "/"
     if config.git == "github":
@@ -102,14 +52,7 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     elif config.git == "gitea":
         top_level_dir = ""
         url = f"{url}/{config.user}/{config.repo}/archive/{config.branch}.zip"
-    if config.username:
-        if config.password:
-            creds = f"{quote(config.username)}:{quote(config.password)}@"
-        else:
-            creds = f"{config.username}@"
-        urlsplit = url.split('://')
-        url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
-    resp_obj = opener(url)
+    resp_obj = _core.request(url, config=config)
     if resp_obj.url.endswith("sign_in"):
         raise ImportError("Failed to authenticate")
     resp = resp_obj.read()

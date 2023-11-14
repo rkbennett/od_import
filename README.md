@@ -58,7 +58,7 @@ with od_import.remote_source('https://github.com', config=config):
   import py3memimporter
 ```
 
-### Load package/module via GITHUB repo - gitlab example
+### Load package/module via GITLAB repo - gitlab example
 
 ```python
 config={"type": "git", "git": "gitlab", "group": "mygroup/mysubgroup", "project": "myproject", "api_key": "glpat_1234567890"}
@@ -101,7 +101,7 @@ with od_import.remote_source('https://my-gitlab.local', config=config):
 ### Load package/module via pypi api
 
 ```python
-config={"type": "pypi", "package": [{"name": "psutil", "release": "5.9.5"}]}
+config={"type": "pypi", "verify": False, "package": [{"name": "psutil", "release": "5.9.5"}]}
 with od_import.remote_source('https://pypi.org/pypi', config=config):
   import psutil
 ```

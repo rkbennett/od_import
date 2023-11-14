@@ -1,24 +1,7 @@
-import sys
-import ssl
 import json
 import logging
+from . import _core
 from base64 import b64decode
-from html.parser import HTMLParser
-
-from urllib.request import (
-    urlopen,
-    Request,
-    HTTPHandler,
-    HTTPSHandler,
-    ProxyHandler,
-    build_opener,
-    quote
-)
-from urllib.error import (
-    HTTPError,
-    URLError
-)
-
 from urllib.parse import quote_plus as urlencode
 
 ########################## Protocol Handlers #########################
@@ -36,10 +19,10 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     return:
         bytes of file content or empty bytes object
     """
+    if 'headers' not in config.__dict__:
+        config.headers = {}
     if 'git' not in config.__dict__:
         raise KeyError("Missing required key 'git'...")
-    if 'headers' not in config.__dict__:
-        config.headers = {'User-agent':'Python-urllib/3.x'}
     if 'api_key' not in config.__dict__:
         config.api_key = None
     if config.git in ["github", "gitea"]:
@@ -48,7 +31,7 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         if 'repo' not in config.__dict__:
             raise KeyError(f"Missing required key 'repo' when git type is '{config.git}'...")
         if config.api_key:
-            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "gitlab" else f"token {config.api_key}"
+            config.headers["Authorization"] = f"Bearer {config.api_key}" if config.git == "github" else f"token {config.api_key}"
     if config.git == "gitlab":
         if ('group' not in config.__dict__ or 'project' not in config.__dict__) and 'project_id' not in config.__dict__:
             raise KeyError("Missing required key(s) 'group' and 'project' required when git type is 'gitlab' and 'project_id' key not set...")
@@ -61,34 +44,6 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             config.branch = None
         else:
             config.branch = "main"
-    if 'proxy' not in config.__dict__:
-        config.proxy = {}
-    if 'User-agent' not in config.headers:
-        config.headers['User-agent'] = 'Python-urllib/3.x'
-    if 'verify' not in config.__dict__:
-        config.verify = True
-    if 'ca_file' not in config.__dict__:
-        config.ca_file = None
-    if 'ca_data' not in config.__dict__:
-        config.ca_data = None
-    if config.proxy and 'url' in config.proxy:
-        req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
-    elif url.startswith("https://"):
-        if not config.verify:
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-        elif config.ca_file or config.ca_data:
-            ssl_context = ssl.create_default_context(cafile=config.ca_file, cadata=config.ca_data)
-        else:
-            ssl_context = None
-        req_handler = HTTPSHandler(context=ssl_context)
-    else:
-        req_handler = HTTPHandler()
-    req_opener = build_opener(req_handler)
-    if config.headers:
-        req_opener.addheaders = [(header, value) for header, value in config.headers.items()]
-    opener = req_opener.open
     if config.git == "github":
         url = url.replace("https://api.github.com", f"https://api.github.com/repos/{config.user}/{config.repo}/contents")
         if path:
@@ -97,7 +52,7 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
             url = f"{url.rstrip('/')}?ref={config.branch}"
     elif config.git == "gitlab":
         if not config.project_id:
-            search_resp = json.loads(opener(f"{url}/api/v4/projects?search={config.project}").read())
+            search_resp = json.loads(_core.request(f"{url}/api/v4/projects?search={config.project}", config=config).read())
             namespaced_path = f"{config.group}/{config.project}"
             for proj in search_resp:
                 if proj['path_with_namespace'] == f"{config.group}/{config.project}":
@@ -123,7 +78,7 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         else:
             url_path = url.split(url.split("/")[2])[1]
             url = url.replace(url_path, f"/api/v1/repos/{config.user}/{config.repo}/contents/{urlencode(url_path)}?ref={config.branch}")
-    resp = opener(url).read()
+    resp = _core.request(url, config=config).read()
     resp_json = json.loads(resp)
     if isinstance(resp_json, dict):
         resp = b64decode(resp_json['content'].encode())

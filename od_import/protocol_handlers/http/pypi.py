@@ -1,6 +1,5 @@
 import io
 import sys
-import ssl
 import json
 import time
 import logging
@@ -8,23 +7,7 @@ import zipfile
 import tarfile
 import operator
 import platform
-from html.parser import HTMLParser
-
-from urllib.request import (
-    urlopen,
-    Request,
-    HTTPHandler,
-    HTTPSHandler,
-    ProxyHandler,
-    build_opener,
-    quote
-)
-from urllib.error import (
-    HTTPError,
-    URLError
-)
-
-from urllib.parse import quote_plus as urlencode
+from . import _core
 
 tar_io = io.BytesIO()
 tar_bytes = tarfile.open(fileobj=tar_io, mode='w:gz')
@@ -92,7 +75,7 @@ def match_distro(package):
                 return distro['url']
     return tarball
 
-def fetch_release(opener, url, package):
+def fetch_release(url, package, config):
     if isinstance(package, str) or (isinstance(package, dict) and (not 'release' in package or not package['release'])):
         release = None
         if isinstance(package, str):
@@ -102,7 +85,7 @@ def fetch_release(opener, url, package):
     elif 'release' in package:
         release = package['release']
         url += f"/{package['name']}/json"
-    resp = opener(url).read()
+    resp = _core.request(url, config=config).read()
     try:
         resp_json = json.loads(resp)
         releases = list(resp_json['releases'].keys())
@@ -112,7 +95,7 @@ def fetch_release(opener, url, package):
                 compatable_package = release_data
             else:
                 raise ImportError(f"Defined release isn't compatible with python version {platform.python_version()}")
-            package_content = opener(match_distro(compatable_package)).read()
+            package_content = _core.request(match_distro(compatable_package), config=config).read()
             return package_content
         elif not release:
             releases.reverse()
@@ -121,7 +104,7 @@ def fetch_release(opener, url, package):
                     compatable_package = resp_json['releases'][release]
                     break
             if compatable_package:
-                package_content = opener(match_distro(compatable_package)).read()
+                package_content = _core.request(match_distro(compatable_package), config=config).read()
                 return package_content
             else:
                 raise ImportError(f"Failed to locate compatible release with python version {platform.python_version()}")
@@ -191,43 +174,15 @@ def pypi(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
         raise KeyError("Missing required key 'package'...")
     if 'release' not in config.__dict__:
         config.release = None
-    if 'headers' not in config.__dict__:
-        config.headers = {'User-agent':'Python-urllib/3.x'}
-    if 'proxy' not in config.__dict__:
-        config.proxy = {}
-    if 'User-agent' not in config.headers:
-        config.headers['User-agent'] = 'Python-urllib/3.x'
-    if 'verify' not in config.__dict__:
-        config.verify = True
-    if 'ca_file' not in config.__dict__:
-        config.ca_file = None
-    if 'ca_data' not in config.__dict__:
-        config.ca_data = None
-    if config.proxy and 'url' in config.proxy:
-        req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
-    elif url.startswith("https://"):
-        if not config.verify:
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-        elif config.ca_file or config.ca_data:
-            ssl_context = ssl.create_default_context(cafile=config.ca_file, cadata=config.ca_data)
-        else:
-            ssl_context = None
-        req_handler = HTTPSHandler(context=ssl_context)
-    req_opener = build_opener(req_handler)
-    if config.headers:
-        req_opener.addheaders = [(header, value) for header, value in config.headers.items()]
-    opener = req_opener.open
     if isinstance(config.package, list):
         for package in config.package:
-            package_content = fetch_release(opener, url, package)
+            package_content = fetch_release(url, package, config)
             if package_content.startswith(b'\x50\x4b\x03\x04'):
                 extract_zip_to_archive(package_content, package)
             elif package_content.startswith(b'\x1f\x8b') or (len(package_content) > 260 and package_content[257:].startswith(b"ustar")):
                 extract_tar_to_archive(package_content, package)
     else:
-        package_content = fetch_release(opener, url, config.package)
+        package_content = fetch_release(url, config.package, config)
         if package_content.startswith(b'\x50\x4b\x03\x04'):
             extract_zip_to_archive(package_content, config.package)
         elif package_content.startswith(b'\x1f\x8b') or (len(package_content) > 260 and package_content[257:].startswith(b"ustar")):
