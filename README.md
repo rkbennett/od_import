@@ -283,6 +283,12 @@ If you are importing from a zip which requires a password, you must provide the 
 
 * This has currently only been tested on windows 10 and 11 with python 3.10-3.12, but in theory should work on any version 3.6+
 
+## How to install
+
+1. Download and install the Git client and Python on your device.
+2. Open your terminal. (Make sure you have the necessary permissions to install packages on your system).
+3. Execute the following command: `pip install git+https://github.com/rkbennett/od_import.git`
+
 ## Contributors
 
 * [boludoz](https://github.com/boludoz) - gitignore and setup.py
