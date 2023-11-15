@@ -1,19 +1,10 @@
-import io
-import sys
 import ssl
-import json
-import time
 import logging
-import zipfile
-import tarfile
-import operator
-import platform
 import http.client
 from base64 import b64decode
 from html.parser import HTMLParser
 
 from urllib.request import (
-    urlopen,
     Request,
     HTTPHandler,
     HTTPSHandler,
@@ -22,28 +13,11 @@ from urllib.request import (
     quote
 )
 
-from urllib.error import (
-    HTTPError,
-    URLError
-)
-
 from urllib.parse import (
     urlencode,
-    quote_plus
 )
 
-def request(url: str,  config: object, method: str=None, data: dict={}) -> object:
-    """
-    Description:
-        Handles common http/s requests for content
-    Args:
-        url: url to connect to for packages
-        config: configuration options for the import hook's protocol handler
-        method: string of desired method to use (GET, PUT, POST)
-        data: dictionary of data to pass with POST or PUT methods  
-    return:
-        An build_opener.open object
-    """
+def _request(url: str,  config: object, method: str=None, data: dict={}) -> object:
     if 'headers' not in config.__dict__:
         config.headers = {'User-agent':'Python-urllib/3.x'}
     elif 'User-agent' not in config.headers:
@@ -63,11 +37,8 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
     if 'timeout' not in config.__dict__ or not (isinstance(config.timeout, int) or isinstance(config.timeout, float)):
         config.timeout = None
     if 'http_version' in config.__dict__ and config.http_version in ['1.0', '1.1']:
-        set_http_version = True
         http.client.HTTPConnection._http_vsn = int(config.http_version.replace('.',''))
         http.client.HTTPConnection._http_vsn_str = f"HTTP/{config.http_version}"
-    else:
-        set_http_version = False
     if config.proxy and 'url' in config.proxy:
         req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
     elif url.startswith("https://"):
@@ -93,17 +64,34 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
             creds = f"{config.username}@"
         urlsplit = url.split('://')
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
+    if not method:
+        resp = opener(url, timeout=config.timeout)
+    elif method in ["PUT", "POST"]:
+        req = Request(url, method=method)
+        encoded_data = urlencode(data).encode('utf-8')
+        resp = opener(req, encoded_data, timeout=config.timeout)
+    return resp
+
+def request(url: str,  config: object, method: str=None, data: dict={}) -> object:
+    """
+    Description:
+        Handles common http/s requests for content
+    Args:
+        url: url to connect to for packages
+        config: configuration options for the import hook's protocol handler
+        method: string of desired method to use (GET, PUT, POST)
+        data: dictionary of data to pass with POST or PUT methods  
+    return:
+        An build_opener.open object
+    """
+
+    HTTP_PROTOCOL_VSN, HTTP_PROTOCOL_STR = http.client.HTTPConnection._http_vsn, http.client.HTTPConnection._http_vsn_str
     try:
-        if not method:
-            resp = opener(url, timeout=config.timeout)
-        elif method in ["PUT", "POST"]:
-            req = Request(url, method=method)
-            encoded_data = urlencode(data).encode('utf-8')
-            resp = opener(req, encoded_data, timeout=config.timeout)
+        return _request(url, config, method, data)
     except Exception as e:
         logging.warning(f"Encountered error during request: {e}")
         raise e
-    if set_http_version:
-        http.client.HTTPConnection._http_vsn = 11
-        http.client.HTTPConnection._http_vsn_str = "HTTP/1.1"
-    return resp
+    # RAII Code, always executed, right after the return statement or exception
+    finally: 
+        http.client.HTTPConnection._http_vsn = HTTP_PROTOCOL_VSN
+        http.client.HTTPConnection._http_vsn_str = HTTP_PROTOCOL_STR
