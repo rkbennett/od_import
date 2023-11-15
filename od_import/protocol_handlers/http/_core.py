@@ -60,11 +60,12 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         config.username = ""
     if 'password' not in config.__dict__:
         config.password = ""
-    if 'http_version' in config.__dict__:
-        if config.http_version in ['1.0', '1.1']:
-            set_http_version = True
-            http.client.HTTPConnection._http_vsn = int(config.http_version.replace('.',''))
-            http.client.HTTPConnection._http_vsn_str = f"HTTP/{config.http_version}"
+    if 'timeout' not in config.__dict__ or not (isinstance(config.timeout, int) or isinstance(config.timeout, float)):
+        config.timeout = None
+    if 'http_version' in config.__dict__ and config.http_version in ['1.0', '1.1']:
+        set_http_version = True
+        http.client.HTTPConnection._http_vsn = int(config.http_version.replace('.',''))
+        http.client.HTTPConnection._http_vsn_str = f"HTTP/{config.http_version}"
     else:
         set_http_version = False
     if config.proxy and 'url' in config.proxy:
@@ -94,11 +95,11 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     try:
         if not method:
-            resp = opener(url)
+            resp = opener(url, timeout=timeout)
         elif method in ["PUT", "POST"]:
             req = Request(url, method=method)
             encoded_data = urlencode(data).encode('utf-8')
-            resp = opener(req, encoded_data)
+            resp = opener(req, encoded_data, timeout=timeout)
     except Exception as e:
         logging.warning(f"Encountered error during request: {e}")
         raise e

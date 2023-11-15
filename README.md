@@ -202,6 +202,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 
 * `username`
 * `password`
+* `timeout` (allows for setting the timeout of a connection)
 * `http_version` (allows for downgrading http version to `HTTP/1.0` on requests)
 * `headers` (dictionary of headers for requests, user-agent defaults to Python-urllib/3.x)
 * `proxy` (Currently supports unauthenticated only)
