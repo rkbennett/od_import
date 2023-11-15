@@ -76,6 +76,16 @@ def ftp():
     from .protocol_handlers import ftp
     return ftp.ftp
 
+def file_handler():
+    """ 
+    Description:
+        Handles loading of dependencies of file protocol handler
+    Returns:
+        function: A function which handles file-based imports
+    """
+    from .protocol_handlers import file
+    return file.read_file
+
 ########################## Archive abstractors ######################
 def zip_handler():
     """ 
@@ -103,14 +113,16 @@ supported_protos = {
     "http": ["http","https"],
     "smb": ["smb"],
     "ftp": ["ftp", "ftps"],
-    "pip": ["pip"]
+    "pip": ["pip"],
+    "file": ["file"]
 }
 
 proto_handlers = {
     "http": http,
     "smb": smb,
     "ftp": ftp,
-    "pip": pip_handler
+    "pip": pip_handler,
+    "file": file_handler
 }
 
 archive_handlers = {
