@@ -1,19 +1,8 @@
-import io
-import sys
 import ssl
-import json
-import time
 import logging
-import zipfile
-import tarfile
-import operator
-import platform
 import http.client
-from base64 import b64decode
-from html.parser import HTMLParser
 
 from urllib.request import (
-    urlopen,
     Request,
     HTTPHandler,
     HTTPSHandler,
@@ -22,14 +11,8 @@ from urllib.request import (
     quote
 )
 
-from urllib.error import (
-    HTTPError,
-    URLError
-)
-
 from urllib.parse import (
-    urlencode,
-    quote_plus
+    urlencode
 )
 
 def request(url: str,  config: object, method: str=None, data: dict={}) -> object:
@@ -64,6 +47,8 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         config.timeout = None
     if 'http_version' in config.__dict__ and config.http_version in ['1.0', '1.1']:
         set_http_version = True
+        default_http_vsn = http.client.HTTPConnection._http_vsn
+        default_http_vsn_str = http.client.HTTPConnection._http_vsn_str
         http.client.HTTPConnection._http_vsn = int(config.http_version.replace('.',''))
         http.client.HTTPConnection._http_vsn_str = f"HTTP/{config.http_version}"
     else:
@@ -100,10 +85,12 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
             req = Request(url, method=method)
             encoded_data = urlencode(data).encode('utf-8')
             resp = opener(req, encoded_data, timeout=config.timeout)
+        return resp
     except Exception as e:
         logging.warning(f"Encountered error during request: {e}")
         raise e
-    if set_http_version:
-        http.client.HTTPConnection._http_vsn = 11
-        http.client.HTTPConnection._http_vsn_str = "HTTP/1.1"
-    return resp
+    finally:
+        if set_http_version:
+            http.client.HTTPConnection._http_vsn = default_http_vsn
+            http.client.HTTPConnection._http_vsn_str = default_http_vsn_str
+
