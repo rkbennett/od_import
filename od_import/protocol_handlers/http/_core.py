@@ -95,11 +95,11 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     try:
         if not method:
-            resp = opener(url, timeout=timeout)
+            resp = opener(url, timeout=config.timeout)
         elif method in ["PUT", "POST"]:
             req = Request(url, method=method)
             encoded_data = urlencode(data).encode('utf-8')
-            resp = opener(req, encoded_data, timeout=timeout)
+            resp = opener(req, encoded_data, timeout=config.timeout)
     except Exception as e:
         logging.warning(f"Encountered error during request: {e}")
         raise e
