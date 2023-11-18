@@ -7,7 +7,8 @@ from . import (
     git_api,
     pypi,
     directory_of,
-    pastebin
+    pastebin,
+    dropbox
 )
 
 ########################## Protocol Handlers #########################
@@ -39,6 +40,15 @@ def http(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
             helper = pypi.pypi
         elif config.type == "pastebin":
             helper = pastebin.pastebin
+        elif config.type == "dropbox":
+            helper = dropbox.dropbox
+    else:
+        if url.startswith("https://pypi.org"):
+            helper = pypi.pypi
+        elif url.startswith("https://pastbin.com"):
+            helper = pastebin.pastebin
+        elif url.startswith("https://dropbox.com"):
+            helper = dropbox.dropbox
     if not helper:
         raise ImportError("An invalid 'type' was provided in 'http' config object")
     return helper(url, path, path_cache, cache_update, config)

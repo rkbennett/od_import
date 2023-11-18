@@ -1,4 +1,6 @@
 import ssl
+import copy
+import json
 import logging
 import http.client
 
@@ -15,7 +17,7 @@ from urllib.parse import (
     urlencode
 )
 
-def request(url: str,  config: object, method: str=None, data: dict={}) -> object:
+def request(url: str,  config: object, method: str=None, data: dict={}, urlencoded: bool=False, **extra_args) -> object:
     """
     Description:
         Handles common http/s requests for content
@@ -67,9 +69,12 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         req_handler = HTTPSHandler(context=ssl_context)
     else:
         req_handler = HTTPHandler()
+    headers = copy.deepcopy(config.headers)
     req_opener = build_opener(req_handler)
-    if config.headers:
-        req_opener.addheaders = [(header, value) for header, value in config.headers.items()]
+    if 'temp_headers' in extra_args:
+        headers.update(extra_args['temp_headers'])
+    if headers:
+        req_opener.addheaders = [(header, value) for header, value in headers.items()]
     opener = req_opener.open
     if config.username:
         if config.password:
@@ -79,11 +84,14 @@ def request(url: str,  config: object, method: str=None, data: dict={}) -> objec
         urlsplit = url.split('://')
         url = f"{urlsplit[0]}://{creds}{urlsplit[1]}"
     try:
-        if not method:
+        if not method or method == "GET":
             resp = opener(url, timeout=config.timeout)
         elif method in ["PUT", "POST"]:
-            req = Request(url, method=method)
-            encoded_data = urlencode(data).encode('utf-8')
+            req = Request(url, method=method, headers=headers)
+            if urlencoded:
+                encoded_data = urlencode(data).encode('utf-8')
+            else:
+                encoded_data = json.dumps(data).encode()
             resp = opener(req, encoded_data, timeout=config.timeout)
         return resp
     except Exception as e:

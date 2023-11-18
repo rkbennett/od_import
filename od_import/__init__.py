@@ -443,11 +443,12 @@ class ODImporter(object):
                             self.modules[fullname]['cExtension'] = True
                             return self
                         elif path + "/" in mods:
-                            # Let's try to update the cache
-                            self.proto_handler(self.url, path=path + "/", path_cache=self.path_cache, config=self.config)
+                            if path + "/__init__.py" not in self.path_cache:
+                                # Let's try to update the cache
+                                self.proto_handler(self.url, path=path + "/", path_cache=self.path_cache, config=self.config)
                             if path + "/__init__.py" in self.path_cache:
                                 self.modules[fullname] = {}
-                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + "/__init__.py", path_cache=self.path_cache, config=self.config)
+                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + "/__init__.py", cache_update=False, path_cache=self.path_cache, config=self.config)
                                 self.modules[fullname]['filepath'] = self.url + "/" + path + "/__init__.py"
                                 self.modules[fullname]['package'] = True
                                 self.modules[fullname]['cExtension'] = False
@@ -591,12 +592,13 @@ def remove_remote_source(url: str):
                 logging.warning("Failed to remove import hook or proto_handler for %s"% import_hook.url)
                 logging.warning(e)
 
-def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}):
+def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
         "git": "github",
-        "type": git_type
+        "type": git_type,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -609,12 +611,13 @@ def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_
     add_remote_source("https://github.com", config=config)
 
 @contextmanager
-def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}):
+def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
         "git": "github",
-        "type": git_type
+        "type": git_type,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -632,13 +635,14 @@ def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key:
     finally:
         remove_remote_source(import_hook.url)
 
-def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "group": group,
         "project": project,
         "git": "gitlab",
         "type": git_type,
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -651,13 +655,14 @@ def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: s
     add_remote_source(url, config=config)
 
 @contextmanager
-def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "group": group,
         "project": project,
         "git": "gitlab",
         "type": git_type,
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -675,13 +680,14 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
     finally:
         remove_remote_source(import_hook.url)
 
-def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
         "git": "gitea",
         "type": git_type,
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -694,13 +700,14 @@ def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="g
     add_remote_source(url, INSECURE=INSECURE, config=config)
 
 @contextmanager
-def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}):
+def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
         "git": "gitea",
         "type": git_type,
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if branch:
         config["branch"] = branch
@@ -718,11 +725,12 @@ def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git",
     finally:
         remove_remote_source(import_hook.url)
 
-def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
+def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "package": package,
         "type": "pypi",
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if proxy:
         config["proxy"] = proxy
@@ -732,17 +740,59 @@ def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, header
     add_remote_source(url, config=config)
 
 @contextmanager
-def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}):
+def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "package": package,
         "type": "pypi",
-        "verify": verify
+        "verify": verify,
+        "timeout": timeout
     }
     if proxy:
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
     url = "https://pypi.org/pypi"
+    import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
+    try:
+        yield
+    except ImportError as e:
+        raise e
+    finally:
+        remove_remote_source(import_hook.url)
+
+def add_dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+    config = {
+        "access_token": access_token,
+        "type": "dropbox",
+        "verify": verify,
+        "proxy": proxy,
+        "timeout": timeout
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    url = "https://api.dropboxapi.com"
+    if path:
+        url = "/".join([url, path.lstrip("/")])
+    add_remote_source(url, config=config)
+
+@contextmanager
+def dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+    config = {
+        "access_token": access_token,
+        "type": "dropbox",
+        "verify": verify,
+        "proxy": proxy,
+        "timeout": timeout
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    url = "https://api.dropboxapi.com"
+    if path:
+        url = "/".join([url, path.lstrip("/")])
     import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
     try:
         yield

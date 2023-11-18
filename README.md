@@ -106,7 +106,15 @@ with od_import.remote_source('https://pypi.org/pypi', config=config):
   import psutil
 ```
 
-### Load package/module via pip (only tested on python 3.12)
+### Load package/module via dropbox api (uses api.dropboxapi.com)
+
+```python
+config={"type": "dropbox", "verify": False, "access_token": "sl.mylongdropboxaccesstoken"}
+with od_import.remote_source('https://dropbox.com/pybof', config=config):
+  import bof
+```
+
+### Load package/module via pip (currently only works with python 3.12)
 
 ```python
 config={"package": ["psutil"]}
@@ -148,6 +156,13 @@ with od_import.gitea("http://my-gitea.local", "rkbennett", "py3memimporter", bra
 ```python
 with od_import.pypi(package=[{"name": "psutil", "release": "5.9.5"}], verify=False):
   import psutil
+```
+
+### Load package/module via dropbox wrapper
+
+```python
+with od_import.dropbox("sl.mylongdropboxaccesstoken", path="/pybof", verify=False, timeout=30):
+  import bof
 ```
 
 ### Load package/module via FTP location
@@ -224,6 +239,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `developer_key` (only used for pastebin when `visibility` set to `private`, `burn` or `passworded`)
 * `user_key` (only used for pastebin when `visibility` set to `private`, `burn` or `passworded`)
 * `paste_password` (only used for pastebin when `visibility` set to `passworded`)
+* `access_token` (only used for dropbox)
 
 
 #### SMB
@@ -260,7 +276,6 @@ If you are importing from a zip which requires a password, you must provide the 
 ### HTTP handler
 
 * `s3 helper`
-* `dropbox helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
 
