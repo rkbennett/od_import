@@ -22,6 +22,8 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
         bytes of file content or empty bytes object
     """
     repo = url.split("://")[1]
+    if 'headers' not in config.__dict__:
+        config.headers = {}
     if 'git' not in config.__dict__:
         raise KeyError("Missing required key 'git'...")
     if 'api_key' not in config.__dict__:
