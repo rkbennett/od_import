@@ -103,6 +103,8 @@ def git(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
         raise KeyError("Missing required key 'git'...")
     if 'api_key' not in config.__dict__:
         config.api_key = None
+    if 'headers' not in config.__dict__:
+        config.headers = {}
     if config.git in ["github", "gitea"]:
         if 'user' not in config.__dict__:
             raise KeyError(f"Missing required key 'user' when git type is '{config.git}'...")
