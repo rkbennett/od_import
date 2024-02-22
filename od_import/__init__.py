@@ -26,10 +26,18 @@ except:
         #check if builtin
         _memimporter
         cExtensionImport = True
+        globals()['raw_python_import'] = False
         logging.info("[!] memory imports loaded")
     except:
-        cExtensionImport = False
-        logging.warning("[!] memory imports not loaded, some packages may not work")
+        try:
+            from pythonmemimporter import _memimporter
+            _memimporter = _memimporter()
+            cExtensionImport = True
+            globals()['raw_python_import'] = True
+            logging.info("[!] memory imports loaded")
+        except:
+            cExtensionImport = False
+            logging.warning("[!] memory imports not loaded, some packages may not work")
 
 ########################## path cache ################################
 
