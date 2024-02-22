@@ -7,7 +7,7 @@
 #    Copyright Â© 2001-2006, Computronix (Canada) Ltd., Edmonton, Alberta, Canada.
 #    All rights reserved.
 #
-import os, sys
+import os, sys, logging
 
 # Exclude modules that the standard library imports (conditionally),
 # but which are not present on windows.
@@ -20,7 +20,6 @@ _emx_link
 _gestalt
 _posixsubprocess
 ce
-clr
 console
 fcntl
 grp
@@ -72,11 +71,15 @@ def hook_clr_loader(finder, module, path, proto_handler, proto_config):
 import os
 import sys
 import importlib
-import pyclrhost
 import {proto_handler}
 import {proto_config}
 from cffi import FFI
 ffi = FFI()
+if raw_python_import:
+    from pythonclrhost import clrhost
+    pyclrhost = clrhost()
+else:
+    import clrhost
 
 if '{module.__name__}.ffi' not in sys.modules:
     import {module.__name__}.ffi
@@ -97,7 +100,10 @@ if '{module.__name__}.ffi' not in sys.modules:
             runtime_version = [ name for name in os.listdir(net_path) if os.path.isdir(os.path.join(net_path, name)) ][-1]
         else:
             runtime_version = 'v4.0.30319'
-        pyclrhost.dotnet(runtime_version, dll)
+        if raw_python_import:
+            pyclrhost.load(dll, runtime_version)
+        else:
+            pyclrhost.dotnet(runtime_version, dll)
         pyclrhost.pyclr_initialize()
         return pyclrhost
 
@@ -117,10 +123,12 @@ if '{module.__name__}.ffi' not in sys.modules:
             config_file_s = str(config_file)
         else:
             config_file_s = b""
-
         self._domain_name = domain
         self._config_file = config_file
-        self._domain = _FW.pyclr_create_appdomain(domain or "", config_file_s.decode())
+        if domain:
+            self._domain = _FW.pyclr_create_appdomain(domain or "", config_file_s.decode())
+        else:
+            self._domain = 0
 
     sys.modules['{module.__name__}.netfx'].NetFx.__init__ = override___init__
 
@@ -136,7 +144,9 @@ if '{module.__name__}.ffi' not in sys.modules:
             function,
             dll
         )
-        func = ffi.cast("int(*)(void *, int)",intPtr)
+        print(typename)
+        print(function)
+        func = ffi.cast("int(*)(void *, int)", intPtr)
         return func
 
     sys.modules['{module.__name__}.netfx'].NetFx._get_callable = override__get_callable
@@ -153,7 +163,7 @@ def hook_Crypto(finder, module, path, proto_handler, proto_config):
     as .dll files. Furthermore, pycryptodome needs to be patched to import those libraries from an external
     path, as their import mechanism will not work from the zip file nor from the executable."""
     # copy all the "pyd" files from pycryptodome to the bundle directory with the correct folder structure
-    crypto_path = os.path.dirname(module.__loader__.path)
+    crypto_path = os.path.dirname(module.__path__)
     from pathlib import Path
     for path in Path(crypto_path).rglob('*.pyd'):
         finder.add_libfile(str(path.relative_to(os.path.dirname(crypto_path))), path)
@@ -166,8 +176,137 @@ import ctypes
 import importlib
 import {proto_handler}
 import {proto_config}
-from cffi import FFI
-ffi = FFI()
+import cffi
+from cffi import model
+import cffi.backend_ctypes
+
+if raw_python_import:
+    def override_make_ffi_library(ffi, libname, flags):
+        tmpffi = cffi.FFI()
+        basestring = str
+        backend = ffi._backend
+        backendlib = cffi.api._load_backend_lib(backend, libname, flags)
+        def accessor_function(name):
+            key = 'function ' + name
+            tp, _ = ffi._parser._declarations[key]
+            BType = ffi._get_cached_btype(tp)
+            func_addr = None
+            for memmodule in ffi.memmodules:
+                try:
+                    func_addr = ctypes.cast(memmodule.get_proc_addr(name), ctypes.c_void_p).value
+                    break
+                except:
+                    pass
+            if not func_addr:
+                raise OSError("Could not find the function specified")
+            value = tmpffi.cast(tp._get_c_name(), func_addr)
+            library.__dict__[name] = value
+        def accessor_variable(name):
+            key = 'variable ' + name
+            tp, _ = ffi._parser._declarations[key]
+            BType = ffi._get_cached_btype(tp)
+            read_variable = backendlib.read_variable
+            write_variable = backendlib.write_variable
+            setattr(FFILibrary, name, property(
+                lambda self: read_variable(BType, name),
+                lambda self, value: write_variable(BType, name, value)))
+        def addressof_var(name):
+            try:
+                return addr_variables[name]
+            except KeyError:
+                with ffi._lock:
+                    if name not in addr_variables:
+                        key = 'variable ' + name
+                        tp, _ = ffi._parser._declarations[key]
+                        BType = ffi._get_cached_btype(tp)
+                        if BType.kind != 'array':
+                            BType = model.pointer_cache(ffi, BType)
+                        p = backendlib.load_function(BType, name)
+                        addr_variables[name] = p
+                return addr_variables[name]
+        def accessor_constant(name):
+            raise NotImplementedError("non-integer constant '%s' cannot be "
+                                    "accessed from a dlopen() library" % (name,))
+        def accessor_int_constant(name):
+            library.__dict__[name] = ffi._parser._int_constants[name]
+        accessors = {{}}
+        accessors_version = [False]
+        addr_variables = {{}}
+        def update_accessors():
+            if accessors_version[0] is ffi._cdef_version:
+                return
+            for key, (tp, _) in ffi._parser._declarations.items():
+                if not isinstance(tp, model.EnumType):
+                    tag, name = key.split(' ', 1)
+                    if tag == 'function':
+                        accessors[name] = accessor_function
+                    elif tag == 'variable':
+                        accessors[name] = accessor_variable
+                    elif tag == 'constant':
+                        accessors[name] = accessor_constant
+                else:
+                    for i, enumname in enumerate(tp.enumerators):
+                        def accessor_enum(name, tp=tp, i=i):
+                            tp.check_not_partial()
+                            library.__dict__[name] = tp.enumvalues[i]
+                        accessors[enumname] = accessor_enum
+            for name in ffi._parser._int_constants:
+                accessors.setdefault(name, accessor_int_constant)
+            accessors_version[0] = ffi._cdef_version
+        def make_accessor(name):
+            with ffi._lock:
+                if name in library.__dict__ or name in FFILibrary.__dict__:
+                    return    # added by another thread while waiting for the lock
+                if name not in accessors:
+                    update_accessors()
+                    if name not in accessors:
+                        raise AttributeError(name)
+                accessors[name](name)
+        class FFILibrary(object):
+            def __getattr__(self, name):
+                make_accessor(name)
+                return getattr(self, name)
+            def __setattr__(self, name, value):
+                try:
+                    property = getattr(self.__class__, name)
+                except AttributeError:
+                    make_accessor(name)
+                    setattr(self, name, value)
+                else:
+                    property.__set__(self, value)
+            def __dir__(self):
+                with ffi._lock:
+                    update_accessors()
+                    return accessors.keys()
+            def __addressof__(self, name):
+                if name in library.__dict__:
+                    return library.__dict__[name]
+                if name in FFILibrary.__dict__:
+                    return addressof_var(name)
+                make_accessor(name)
+                if name in library.__dict__:
+                    return library.__dict__[name]
+                if name in FFILibrary.__dict__:
+                    return addressof_var(name)
+                raise AttributeError("cffi library has no function or "
+                                    "global variable named '%s'" % (name,))
+            def __cffi_close__(self):
+                backendlib.close_lib()
+                self.__dict__.clear()
+        if isinstance(libname, basestring):
+            try:
+                if not isinstance(libname, str):    # unicode, on Python 2
+                    libname = libname.encode('utf-8')
+                FFILibrary.__name__ = 'FFILibrary_%s' % libname
+            except UnicodeError:
+                pass
+        library = FFILibrary()
+        return library, library.__dict__
+
+    cffi.api._make_ffi_library = override_make_ffi_library
+
+ffi = cffi.FFI()
+ffi.memmodules = []
 
 if '{module.__name__}.Util._file_system' not in sys.modules:
     import {module.__name__}.Util._file_system
@@ -195,7 +334,11 @@ if '{module.__name__}.Util._raw_api' not in sys.modules:
             full_name = pycryptodome_filename(dir_comps, filename)
             try:
                 pyd = {proto_handler}(f'{{full_name}}.pyd', path_cache=[None],cache_update=False, config={proto_config})
-                vptrint = _memimporter.dlopen(pyd,0)
+                if raw_python_import:
+                    ffi.memmodules.append(_memimporter.dlopen(pyd, 0))
+                    vptrint = id(ffi.memmodules[-1])
+                else:
+                    vptrint = _memimporter.dlopen(pyd,0)
                 lib = ffi.dlopen(ffi.cast("void *",vptrint))
                 ffi.cdef(cdecl)
                 return lib
