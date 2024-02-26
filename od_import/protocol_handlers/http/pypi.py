@@ -7,7 +7,6 @@ import zipfile
 import tarfile
 import operator
 import platform
-from . import _core
 
 tar_io = io.BytesIO()
 tar_bytes = tarfile.open(fileobj=tar_io, mode='w:gz')
@@ -75,7 +74,7 @@ def match_distro(package):
                 return distro['url']
     return tarball
 
-def fetch_release(url, package, config):
+def fetch_release(url, package, config, _core):
     if isinstance(package, str) or (isinstance(package, dict) and (not 'release' in package or not package['release'])):
         release = None
         if isinstance(package, str):
@@ -170,19 +169,24 @@ def pypi(url, path="", path_cache: list=[], cache_update: bool=True, config: obj
     return:
         bytes of file content or empty bytes object
     """
+    if '_core' not in dir():
+        if 'http_provider' in config.__dict__ and config.http_provider == "winhttp":
+            from . import _core_winhttp as _core
+        else:
+            from . import _core_python as _core
     if 'package' not in config.__dict__:
         raise KeyError("Missing required key 'package'...")
     if 'release' not in config.__dict__:
         config.release = None
     if isinstance(config.package, list):
         for package in config.package:
-            package_content = fetch_release(url, package, config)
+            package_content = fetch_release(url, package, config, _core)
             if package_content.startswith(b'\x50\x4b\x03\x04'):
                 extract_zip_to_archive(package_content, package)
             elif package_content.startswith(b'\x1f\x8b') or (len(package_content) > 260 and package_content[257:].startswith(b"ustar")):
                 extract_tar_to_archive(package_content, package)
     else:
-        package_content = fetch_release(url, config.package, config)
+        package_content = fetch_release(url, config.package, config, _core)
         if package_content.startswith(b'\x50\x4b\x03\x04'):
             extract_zip_to_archive(package_content, config.package)
         elif package_content.startswith(b'\x1f\x8b') or (len(package_content) > 260 and package_content[257:].startswith(b"ustar")):

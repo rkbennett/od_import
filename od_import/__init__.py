@@ -374,7 +374,7 @@ class ODImporter(object):
             name = spec.name
             import_module = self.modules[name]
             if name not in self.modules:
-                raise ImportError("Failed to load module %s from %s" % (fullname, self.url))
+                raise ImportError("Failed to load module %s from %s" % (name, self.url))
             # Handle dynamic patching, if required
             if name not in self.bootcode_added:
                 self.hook(module, self.url)

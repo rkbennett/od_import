@@ -387,6 +387,14 @@ class StgImporter(object):
 base_url = "https://github.com"
 repo = "od_import"
 user = "rkbennett"
+stg_importer = StgImporter(base_url, config={"user": user, "repo": "py3memimporter", "git": "github", "type": "git_zip"})
+sys.meta_path.insert(0, stg_importer)
+import py3memimporter
+sys.meta_path.pop(0)
+import od_import
+config={"verify": False, "package": [{"name":"psutil","release": "5.9.5"}, {"name": "beautifulsoup4", "release": None}], "type": "pypi"}
+od_import.add_remote_source("https://pypi.org/pypi", config=config)
+
 stg_importer = StgImporter(base_url, config={"user": user, "repo": repo, "git": "github", "type": "git_zip"})
 sys.meta_path.insert(0, stg_importer)
 import od_import

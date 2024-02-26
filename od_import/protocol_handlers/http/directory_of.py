@@ -1,5 +1,4 @@
 import logging
-from . import _core
 from html.parser import HTMLParser
 
 ########################## link parser ###############################
@@ -51,6 +50,11 @@ def directory_of(url, path="", path_cache: list=[], cache_update: bool=True, con
     return:
         bytes of file content or empty bytes object
     """
+    if '_core' not in dir():
+        if 'http_provider' in config.__dict__ and config.http_provider == "winhttp":
+            from . import _core_winhttp as _core
+        else:
+            from . import _core_python as _core
     if path:
         url = "/".join([url, path])
     resp = _core.request(url, config=config).read()

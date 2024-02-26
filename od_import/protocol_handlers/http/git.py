@@ -2,7 +2,6 @@ import sys
 import ssl
 import json
 import logging
-from . import _core
 from html.parser import HTMLParser
 
 ########################## link parser ###############################
@@ -99,6 +98,11 @@ def git(url, path="", path_cache: list=[], cache_update: bool=True, config: obje
     return:
         bytes of file content or empty bytes object
     """
+    if '_core' not in dir():
+        if 'http_provider' in config.__dict__ and config.http_provider == "winhttp":
+            from . import _core_winhttp as _core
+        else:
+            from . import _core_python as _core
     if 'git' not in config.__dict__:
         raise KeyError("Missing required key 'git'...")
     if 'api_key' not in config.__dict__:

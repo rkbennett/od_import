@@ -1,6 +1,5 @@
 import json
 import logging
-from . import _core
 from base64 import b64decode
 from urllib.parse import quote_plus as urlencode
 
@@ -19,6 +18,11 @@ def git_api(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     return:
         bytes of file content or empty bytes object
     """
+    if '_core' not in dir():
+        if 'http_provider' in config.__dict__ and config.http_provider == "winhttp":
+            from . import _core_winhttp as _core
+        else:
+            from . import _core_python as _core
     if 'headers' not in config.__dict__:
         config.headers = {}
     if 'git' not in config.__dict__:

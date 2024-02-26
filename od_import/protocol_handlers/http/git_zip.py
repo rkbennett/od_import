@@ -3,7 +3,6 @@ import time
 import logging
 import zipfile
 import tarfile
-from . import _core
 from html.parser import HTMLParser
 
 ########################## Protocol Handlers #########################
@@ -21,6 +20,11 @@ def git_zip(url, path="", path_cache: list=[], cache_update: bool=True, config: 
     return:
         bytes of file content or empty bytes object
     """
+    if '_core' not in dir():
+        if 'http_provider' in config.__dict__ and config.http_provider == "winhttp":
+            from . import _core_winhttp as _core
+        else:
+            from . import _core_python as _core
     repo = url.split("://")[1]
     if 'headers' not in config.__dict__:
         config.headers = {}
