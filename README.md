@@ -240,6 +240,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `user_key` (only used for pastebin when `visibility` set to `private`, `burn` or `passworded`)
 * `paste_password` (only used for pastebin when `visibility` set to `passworded`)
 * `access_token` (only used for dropbox)
+* `http_provider` (only accepts `winhttp` currently; instructs web requests to use winhttp api calls instead of urllib -- only works on Windows)
 
 
 #### SMB
