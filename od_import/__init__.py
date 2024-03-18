@@ -377,11 +377,11 @@ class ODImporter(object):
                 raise ImportError("Failed to load module %s from %s" % (name, self.url))
             # Handle dynamic patching, if required
             if name not in self.bootcode_added:
-                self.hook(module, self.url)
+                hooked_module = self.hook(module, self.url)
                 if self._boot_code:
                     self.bootcode_added.append(name)
                     for boot_code in self._boot_code:
-                        if name == package:
+                        if name == hooked_module:
                             exec(boot_code, globals())
                     self._boot_code = []
             if import_module['cExtension']:
@@ -600,7 +600,7 @@ def remove_remote_source(url: str):
                 logging.warning("Failed to remove import hook or proto_handler for %s"% import_hook.url)
                 logging.warning(e)
 
-def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}, timeout=None):
+def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
@@ -616,10 +616,12 @@ def add_github(user: str, repo: str, branch: str=None, git_type: str="git", api_
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     add_remote_source("https://github.com", config=config)
 
 @contextmanager
-def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, headers: dict={}, timeout=None):
+def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
@@ -635,6 +637,8 @@ def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key:
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     import_hook = add_remote_source("https://github.com", return_importer=True, config=config)
     try:
         yield
@@ -643,7 +647,7 @@ def github(user: str, repo: str, branch: str=None, git_type: str="git", api_key:
     finally:
         remove_remote_source(import_hook.url)
 
-def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
+def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "group": group,
         "project": project,
@@ -660,10 +664,12 @@ def add_gitlab(url: str, group: str, project: str, branch: str=None, git_type: s
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     add_remote_source(url, config=config)
 
 @contextmanager
-def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
+def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "group": group,
         "project": project,
@@ -680,6 +686,8 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
     try:
         yield
@@ -688,7 +696,7 @@ def gitlab(url: str, group: str, project: str, branch: str=None, git_type: str="
     finally:
         remove_remote_source(import_hook.url)
 
-def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
+def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
@@ -705,10 +713,12 @@ def add_gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="g
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     add_remote_source(url, INSECURE=INSECURE, config=config)
 
 @contextmanager
-def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
+def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git", api_key: str=None, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, ca_file: str=None, ca_data: str=None, headers: dict={}, timeout=None):
     config = {
         "user": user,
         "repo": repo,
@@ -725,6 +735,8 @@ def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git",
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
     try:
         yield
@@ -733,7 +745,7 @@ def gitea(url: str, user: str, repo: str, branch: str=None, git_type: str="git",
     finally:
         remove_remote_source(import_hook.url)
 
-def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+def add_pypi(package, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "package": package,
         "type": "pypi",
@@ -744,11 +756,13 @@ def add_pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, header
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     url = "https://pypi.org/pypi"
     add_remote_source(url, config=config)
 
 @contextmanager
-def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+def pypi(package, http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "package": package,
         "type": "pypi",
@@ -759,6 +773,8 @@ def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: d
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     url = "https://pypi.org/pypi"
     import_hook = add_remote_source(url, INSECURE=INSECURE, return_importer=True, config=config)
     try:
@@ -768,7 +784,7 @@ def pypi(package, proxy: str=None, INSECURE=False, verify: bool=True, headers: d
     finally:
         remove_remote_source(import_hook.url)
 
-def add_dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+def add_dropbox(access_token: str, path: str="", http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "access_token": access_token,
         "type": "dropbox",
@@ -780,13 +796,15 @@ def add_dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     url = "https://api.dropboxapi.com"
     if path:
         url = "/".join([url, path.lstrip("/")])
     add_remote_source(url, config=config)
 
 @contextmanager
-def dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
+def dropbox(access_token: str, path: str="", http_provider: str=None, proxy: str=None, INSECURE=False, verify: bool=True, headers: dict={}, timeout=None):
     config = {
         "access_token": access_token,
         "type": "dropbox",
@@ -798,6 +816,8 @@ def dropbox(access_token: str, path: str="", proxy: str=None, INSECURE=False, ve
         config["proxy"] = proxy
     if headers:
         config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
     url = "https://api.dropboxapi.com"
     if path:
         url = "/".join([url, path.lstrip("/")])
