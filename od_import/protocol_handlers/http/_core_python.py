@@ -56,7 +56,12 @@ def request(url: str,  config: object, method: str=None, data: dict={}, urlencod
     else:
         set_http_version = False
     if config.proxy and 'url' in config.proxy:
-        req_handler = ProxyHandler({config.proxy['url'].split('://')[0]:config.proxy['url']})
+        req_handler = ProxyHandler(
+            {
+                "http": config.proxy['url'],
+                "https": config.proxy['url']
+            }
+        )
     elif url.startswith("https://"):
         if not config.verify:
             ssl_context = ssl.create_default_context()
