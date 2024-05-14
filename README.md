@@ -50,6 +50,14 @@ with od_import.remote_source('http://my-packages.local/site-packages', config=co
   import package
 ```
 
+### Load package/module via S3 bucket
+
+```python
+config = {"type": "s3", "access_key": "MYACCESSKEY", "bucket": "mybucket", "secret_key": "MYSECRETKEY", "region": "us-east-1"}
+with od_import.remote_source("https://amazonaws.com", config=config):
+  import mypackage
+```
+
 ### Load package/module via GITHUB repo (uses github.com and raw.githubusercontent.com) - github example
 
 ```python
@@ -128,6 +136,14 @@ with od_import.remote_source('pip', config=config):
 config = {'type':'pastebin', 'visibility': 'passworded', 'paste_key': 'PaSt3Key', "module": "foo", "developer_key": "mydeveloperkey", "user_key": "myuserkey", "paste_password": "foobarbaz"}
 with od_import.remote_source('https://pastebin.com', config=config):
   import foo
+```
+
+### Load package/module via s3 wrapper
+
+```python
+config = {"access_key": "MYACCESSKEY", "bucket": "mybucket", "secret_key": "MYSECRETKEY", "region": "us-east-1"}
+with od_import.s3(**config):
+  import my_package
 ```
 
 ### Load package/module via github wrapper
@@ -224,7 +240,7 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `verify` (enable/disable certificate verification for https certificates, defaults to `True`)
 * `ca_file` (path to ca file for certificate trust)
 * `ca_data` (string containing one more concatinated ca certificates)
-* `type` (one of dir, git, git_zip, or git_api; currently defaults to dir)
+* `type` (one of dir, s3, git, git_zip, or git_api; currently defaults to dir)
 * `api_key` (only used for git, git_zip, and git_api types)
 * `git` (only accepts `gitea`, `gitlab`, and `github` currently; only used for git_zip and git_api types)
 * `package` (only used for pypi, can be a str of the package name, a dict of the package name and release or a list of package dicts)
@@ -241,6 +257,10 @@ Configs are a dict of attributes associated with the remote source for packages/
 * `paste_password` (only used for pastebin when `visibility` set to `passworded`)
 * `access_token` (only used for dropbox)
 * `http_provider` (only accepts `winhttp` currently; instructs web requests to use winhttp api calls instead of urllib -- only works on Windows)
+* `access_key` (only used for s3 type)
+* `secret_key` (only used for s3 type)
+* `bucket` (only used for s3 types)
+* `region` (only used for s3 types)
 
 
 #### SMB
@@ -276,7 +296,6 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ### HTTP handler
 
-* `s3 helper`
 * `bitbucket helper`
 * `add multiple gitlab token types to git helpers`
 

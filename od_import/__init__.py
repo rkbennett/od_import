@@ -829,6 +829,47 @@ def dropbox(access_token: str, path: str="", http_provider: str=None, proxy: str
     finally:
         remove_remote_source(import_hook.url)
 
+def add_s3(bucket: str=None, region: str=None, access_key: str=None, secret_key: str=None, http_provider: str=None, proxy: str=None, headers: dict={}, timeout=None):
+    config = {
+        "bucket": bucket,
+        "region": region,
+        "type": "s3",
+        "access_key": access_key,
+        "secret_key": secret_key,
+        "timeout": timeout
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
+    add_remote_source("https://amazonaws.com", config=config)
+
+@contextmanager
+def s3(bucket: str=None, region: str=None, access_key: str=None, secret_key: str=None, http_provider: str=None, proxy: str=None, headers: dict={}, timeout=None):
+    config = {
+        "bucket": bucket,
+        "region": region,
+        "type": "s3",
+        "access_key": access_key,
+        "secret_key": secret_key,
+        "timeout": timeout
+    }
+    if proxy:
+        config["proxy"] = proxy
+    if headers:
+        config["headers"] = headers
+    if http_provider == "winhttp":
+        config['http_provider'] = http_provider
+    import_hook = add_remote_source("https://amazonaws.com", return_importer=True, config=config)
+    try:
+        yield
+    except ImportError as e:
+        raise e
+    finally:
+        remove_remote_source(import_hook.url)
+
 @contextmanager
 def remote_source(url: str, INSECURE: bool=False, zip_password: bytes=None, config: dict={}):
     """
