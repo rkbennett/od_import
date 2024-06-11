@@ -19,6 +19,7 @@ if threedottwelve:
 try:
     #check if importable
     import _memimporter
+    globals()['raw_python_import'] = False
     cExtensionImport = True
     logging.info("[!] memory imports loaded")
 except:
@@ -30,14 +31,21 @@ except:
         logging.info("[!] memory imports loaded")
     except:
         try:
-            from pythonmemimporter import _memimporter
-            _memimporter = _memimporter()
+            pythonmemimporter
+            _memimporter = pythonmemimporter._memimporter()
             cExtensionImport = True
             globals()['raw_python_import'] = True
             logging.info("[!] memory imports loaded")
         except:
-            cExtensionImport = False
-            logging.warning("[!] memory imports not loaded, some packages may not work")
+            try:
+                from pythonmemimporter import _memimporter
+                _memimporter = _memimporter()
+                cExtensionImport = True
+                globals()['raw_python_import'] = True
+                logging.info("[!] memory imports loaded")
+            except:
+                cExtensionImport = False
+                logging.warning("[!] memory imports not loaded, some packages may not work")
 
 ########################## path cache ################################
 
