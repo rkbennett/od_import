@@ -267,163 +267,44 @@ class ODImporter(object):
             raw contents of c extension"""
         return self.modules[fullname.replace("/",".")]['content']
     
-    if threedottwelve:
-        def find_spec(self, fullname: str, path: str=None, target: object=None):
-            """
-            Description:
-                Determines if this import meta hook can load the requested module
-            Args:
-                fullname: name of module being imported
-                path: file path of module being imported
-            Returns:
-                ModuleSpec object if the module can be loaded or None if the module cannot be loaded
-            """
-            if self.path_cache and fullname not in self.excludes:
-                depth = 1
-                path = fullname.replace(".","/")
-                package_spec = importlib.machinery.ModuleSpec(fullname, self)
-                package_spec.cached = None
-                while depth <= len(path.split("/")):
-                    if "/".join(path.split("/")[:depth]) == path:
-                        mods = [mod for mod in self.path_cache if mod.startswith(path)]
-                        c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
-                        pyc_mods = [mod for mod in self.path_cache if mod.startswith(path) and mod.split("/")[depth - 1].endswith(".pyc")]
-                        if mods:
-                            if path + ".py" in mods:
-                                self.modules[fullname] = {}
-                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + ".py", path_cache=self.path_cache, config=self.config)
-                                self.modules[fullname]['filepath'] = self.url + "/" + path + ".py"
-                                self.modules[fullname]['package'] = False
-                                self.modules[fullname]['cExtension'] = False
-                                package_spec.origin = self.modules[fullname]['filepath']
-                                package_spec.has_location = True
-                                return package_spec
-                            elif cExtensionImport and c_mods: # or mod.endswith('.so')): #not currently supporting *nix
-                                self.modules[fullname] = {}
-                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + c_mods[0], path_cache=self.path_cache, config=self.config)
-                                self.modules[fullname]['filepath'] = self.url + "/" + c_mods[0]
-                                self.modules[fullname]['package'] = False
-                                self.modules[fullname]['cExtension'] = True
-                                package_spec = _frozen_importlib.ModuleSpec(fullname, self, origin=self.url + "/" + c_mods[0], is_package=False)
-                                return package_spec
-                            elif path + "/" in mods:
-                                # Let's try to update the cache
-                                self.proto_handler(self.url, path=path + "/", path_cache=self.path_cache, config=self.config)
-                                if path + "/__init__.py" in self.path_cache:
-                                    self.modules[fullname] = {}
-                                    self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + path + "/__init__.py", path_cache=self.path_cache, config=self.config)
-                                    self.modules[fullname]['filepath'] = self.url + "/" + path + "/__init__.py"
-                                    self.modules[fullname]['package'] = True
-                                    self.modules[fullname]['cExtension'] = False
-                                    package_spec.origin = self.url + "/" + path + "/__init__.py"
-                                    package_spec.submodule_search_locations = [self.url + "/" + path]
-                                    package_spec.has_location = True
-                                    return package_spec
-                            elif path + ".pyc" in mods:
-                                self.modules[fullname] = {}
-                                self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + pyc_mods[0], path_cache=self.path_cache, config=self.config)
-                                self.modules[fullname]['filepath'] = self.url + "/" + pyc_mods[0]
-                                self.modules[fullname]['package'] = False
-                                self.modules[fullname]['cExtension'] = False
-                                package_spec.origin = self.url + "/" + pyc_mods[0]
-                                package_spec.has_location = True
-                                return package_spec
-                        if f"{path}/" in self.path_cache:
-                            # This may be an odd package implementation which doesn't use an __init__ file (looking at you pywin32)
-                            self.modules[fullname] = {}
-                            self.modules[fullname]['content'] = b""
-                            self.modules[fullname]['filepath'] = None
-                            self.modules[fullname]['package'] = True
-                            self.modules[fullname]['cExtension'] = False
-                            package_spec.origin = None
-                            package_spec.submodule_search_locations = [self.url + "/" + path]
-                            package_spec.has_location = True
-                            return package_spec
-                    else:
-                        if (("/".join(path.split("/")[:depth]) + "/" in self.path_cache) or ("/".join(path.split("/")[:depth]) in self.path_cache)):
-                            # Try to update cache
-                            self.proto_handler(self.url, path="/".join(path.split("/")[:depth]) + "/", path_cache=self.path_cache, config=self.config)
-                            if not [mod for mod in self.path_cache if mod.startswith("/".join(path.split("/")[:depth]))]:
-                                # the path couldn't be matched at the current depth
-                                logging.info("%s couldn't be matched at the current depth" % "/".join(path.split("/")[:depth]))
-                                break
-                    depth += 1
-            return None
-
-        def create_module(self, spec):
-            """
-            Description:
-                Creates a module object of the requested module
-            Args:
-                spec: spec of module being imported
-            Returns:
-                module object or None if the default module creation semantics should take place
-            """
-            module = type(sys)(spec.name)
-            try:
-                filename = spec.loader_state.filename
-            except AttributeError:
-                pass
-            else:
-                if filename:
-                    module.__file__ = filename
-            return module
-
-        def exec_module(self, module):
-            """
-            Description:
-                Executes the module in its own namespace when a module is imported or reloaded
-            Args:
-                module: module being imported
-            """
-            if hasattr(module, "__cached__"):
-                delattr(module, "__cached__")
-            spec = module.__spec__
-            name = spec.name
-            import_module = self.modules[name]
-            if name not in self.modules:
-                raise ImportError("Failed to load module %s from %s" % (name, self.url))
-            # Handle dynamic patching, if required
-            if name not in self.bootcode_added:
-                hooked_module = self.hook(module, self.url)
-                if self._boot_code:
-                    self.bootcode_added.append(name)
-                    for boot_code in self._boot_code:
-                        if name == hooked_module:
-                            exec(boot_code, globals())
-                    self._boot_code = []
-            if import_module['cExtension']:
-                if not hasattr(module, '__builtins__'):
-                    module.__builtins__ = __builtins__
-                self.path = spec.origin
-                spec._set_fileattr = False
-                initname = f"PyInit_{name.split('.')[-1]}"
-                mod = _memimporter.import_module(name, name, initname, self._get_module_content, spec)
-                mod.__spec__ = spec
-                mod.__file__ = spec.origin
-                mod.__loader__ = spec.loader
-                mod.__package__ = spec.parent
-            else:
-                if self.modules[name]['filepath']:
-                    self.path = module.__file__
-                else:
-                    self.path = f"{self.url}/{name}/"
-                sys.modules[name] = module
-                if module.__file__.endswith(".pyc"):
-                    try:
-                        decompile_content = marshal.loads(import_module['content'][16:])
-                    except:
-                        logging.info(f"Failed to marshal {module.__file__} with offset of 16")
-                        try:
-                            decompile_content = marshal.loads(import_module['content'][12:])
-                        except:
-                            logging.info(f"Failed to marshal {module.__file__} with offset of 12")
-                            decompile_content = marshal.loads(import_module['content'][8:])
-                    import_module['content'] = decompile_content
-                exec(import_module['content'], module.__dict__)
-            if name in self.modules:
-                # release loaded module
+    def _dispose(self, name, mod):
+        if name in self.modules:
+            if mod.__name__ not in self.bytecode_added:
+                # release loaded
                 self.modules.pop(name)
+            elif 'content' in self.modules[name]:
+                # release loaded module content
+                self.modules[name].pop('content')
+
+    def _load_py(self, name, module):
+        import_module = self.modules[name]
+        if self.modules[name]['filepath']:
+                    self.path = module.__file__
+        else:
+            self.path = f"{self.url}/{name}/"
+        sys.modules[name] = module
+        if module.__file__.endswith(".pyc"):
+            try:
+                decompile_content = marshal.loads(import_module['content'][16:])
+            except:
+                logging.info(f"Failed to marshal {module.__file__} with offset of 16")
+                try:
+                    decompile_content = marshal.loads(import_module['content'][12:])
+                except:
+                    logging.info(f"Failed to marshal {module.__file__} with offset of 12")
+                    decompile_content = marshal.loads(import_module['content'][8:])
+            import_module['content'] = decompile_content
+        exec(import_module['content'], module.__dict__)
+
+    def _dynamic_patch(self, name, module):
+        if name not in self.bootcode_added:
+            hooked_module = self.hook(module, self.url)
+            if self._boot_code:
+                self.bootcode_added.append(name)
+                for boot_code in self._boot_code:
+                    if name == hooked_module:
+                        exec(boot_code, globals())
+                self._boot_code = []
 
     def find_module(self, fullname: str, path: str=None):
         """
@@ -575,6 +456,128 @@ class ODImporter(object):
                 # release loaded module content
                 self.modules[fullname].pop('content')
         return mod
+    
+    def load_module(self, fullname: str):
+        """
+        Description:
+            Loads module into current namespace
+        Args:
+            fullname: name of the module/package to load
+        Return:
+            Returns module object with loaded/executed code within the module namespace"""
+        
+        if fullname not in self.modules:
+            raise ImportError("Failed to load module %s from %s" % (fullname, self.url))
+        import_module = self.modules[fullname]
+        mod = types.ModuleType(fullname)
+        mod.__loader__ = self
+        if self.modules[fullname]['filepath']:
+            mod.__file__ = import_module['filepath']
+            mod.__path__ = "/".join(import_module['filepath'].split("/")[:-1]) + "/"
+        else:
+            mod.__path__ = f"{self.url}/{fullname}/"
+        if import_module['package']:
+            mod.__package__ = fullname
+        else:
+            #recursively find the package
+            if len(fullname.split('.')[:-1]) > 1:
+                pkg_name = '.'.join(fullname.split('.')[:-1])
+                while sys.modules[pkg_name].__package__ != pkg_name:
+                    pkg_name = '.'.join(pkg_name.split('.')[:-1])
+                mod.__package__ = pkg_name
+            else:
+                mod.__package__ = fullname.split('.')[0]
+        
+        # Handle dynamic patching, if required
+        self._dynamic_patch(fullname, mod)
+        if import_module['cExtension']:
+            self.path = mod.__file__
+            fpath = fullname.replace(".","/")
+            try:
+                spec = importlib.util.find_spec(fullname, fpath)
+            except:
+                spec = importlib.find_loader(fullname, fpath)
+            initname = f"PyInit_{fullname.split('.')[-1]}"
+            mod = _memimporter.import_module(fullname, fpath, initname, self._get_module_content, spec)
+            mod.__name__ = fullname
+            sys.modules[fullname] = mod
+        else:
+            self._load_py(fullname, mod)
+        self._dispose(fullname, mod)
+        return mod
+
+    def find_spec(self, fullname: str, path: str=None, target: object=None):
+        """
+        Description:
+            Wraps find_module function and performs translations for find_spec
+        Args:
+            fullname: name of module being imported
+            path: file path of module being imported
+        Returns:
+            ModuleSpec object if the module can be loaded or None if the module cannot be loaded
+        """
+        logging.info("find_spec called, wrapping find_module...")
+        if self.find_module(fullname, path):
+            if self.modules[fullname]['cExtension']:
+                package_spec = _frozen_importlib.ModuleSpec(fullname, self, origin=self.modules[fullname]['filepath'], is_package=False)
+            else:
+                package_spec = importlib.machinery.ModuleSpec(fullname, self)
+                package_spec.cached = None
+                package_spec.origin = self.modules[fullname]['filepath']
+                package_spec.has_location = True
+                if self.modules[fullname]['package']:
+                    package_spec.submodule_search_locations = [self.url + "/" + fullname.replace(".", "/")]
+            return package_spec
+        return None
+    
+    def create_module(self, spec):
+        """
+        Description:
+            Creates a module object of the requested module
+        Args:
+            spec: spec of module being imported
+        Returns:
+            module object or None if the default module creation semantics should take place
+        """
+        module = type(sys)(spec.name)
+        try:
+            filename = spec.loader_state.filename
+        except AttributeError:
+            pass
+        else:
+            if filename:
+                module.__file__ = filename
+        return module
+    
+    def exec_module(self, module):
+        """
+        Description:
+            Executes the module in its own namespace when a module is imported or reloaded
+        Args:
+            module: module being imported
+        """
+        if hasattr(module, "__cached__"):
+            delattr(module, "__cached__")
+        spec = module.__spec__
+        name = spec.name
+        if name not in self.modules:
+            raise ImportError("Failed to load module %s from %s" % (name, self.url))
+        # Handle dynamic patching, if required
+        self._dynamic_patch(name, module)
+        if self.modules[name]['cExtension']:
+            if not hasattr(module, '__builtins__'):
+                module.__builtins__ = __builtins__
+            self.path = spec.origin
+            spec._set_fileattr = False
+            initname = f"PyInit_{name.split('.')[-1]}"
+            mod = _memimporter.import_module(name, name, initname, self._get_module_content, spec)
+            mod.__spec__ = spec
+            mod.__file__ = spec.origin
+            mod.__loader__ = spec.loader
+            mod.__package__ = spec.parent
+        else:
+            self._load_py(name, module)
+        self._dispose(name, module)
 
 
 def add_remote_source(url: str, INSECURE: bool=False, excludes: list=[], return_importer: bool=False, zip_password: bytes=None, config: dict={}):
