@@ -384,87 +384,6 @@ class ODImporter(object):
             fullname: name of the module/package to load
         Return:
             Returns module object with loaded/executed code within the module namespace"""
-        if fullname not in self.modules:
-            raise ImportError("Failed to load module %s from %s" % (fullname, self.url))
-
-        import_module = self.modules[fullname]
-
-        mod = types.ModuleType(fullname)
-
-        mod.__loader__ = self
-        if self.modules[fullname]['filepath']:
-            mod.__file__ = import_module['filepath']
-            mod.__path__ = "/".join(import_module['filepath'].split("/")[:-1]) + "/"
-        else:
-            mod.__path__ = f"{self.url}/{fullname}/"
-        if import_module['package']:
-            mod.__package__ = fullname
-        else:
-            #recursively find the package
-            if len(fullname.split('.')[:-1]) > 1:
-                pkg_name = '.'.join(fullname.split('.')[:-1])
-                while sys.modules[pkg_name].__package__ != pkg_name:
-                    pkg_name = '.'.join(pkg_name.split('.')[:-1])
-                mod.__package__ = pkg_name
-            else:
-                mod.__package__ = fullname.split('.')[0]
-
-        # Handle dynamic patching, if required
-        if mod.__name__ not in self.bootcode_added:
-            hooked_module = self.hook(mod, self.url)
-            if self._boot_code:
-                self.bootcode_added.append(mod.__name__)
-                for boot_code in self._boot_code:
-                    if mod.__name__ == hooked_module:
-                        exec(boot_code, globals())
-                self._boot_code = []
-    
-        if import_module['cExtension']:
-            self.path = mod.__file__
-            fpath = fullname.replace(".","/")
-            try:
-                spec = importlib.util.find_spec(fullname, fpath)
-            except:
-                spec = importlib.find_loader(fullname, fpath)
-            initname = f"PyInit_{fullname.split('.')[-1]}"
-            mod = _memimporter.import_module(fullname, fpath, initname, self._get_module_content, spec)
-            mod.__name__ = fullname
-            sys.modules[fullname] = mod
-        else:
-            if self.modules[fullname]['filepath']:
-                self.path = mod.__file__
-            else:
-                self.path = f"{self.url}/{fullname}/"
-            sys.modules[fullname] = mod
-            if mod.__file__.endswith(".pyc"):
-                try:
-                    decompile_content = marshal.loads(import_module['content'][16:])
-                except:
-                    logging.info(f"Failed to marshal {mod.__file__} with offset of 16")
-                    try:
-                        decompile_content = marshal.loads(import_module['content'][12:])
-                    except:
-                        logging.info(f"Failed to marshal {mod.__file__} with offset of 12")
-                        decompile_content = marshal.loads(import_module['content'][8:])
-                import_module['content'] = decompile_content
-            exec(import_module['content'], mod.__dict__)
-        if fullname in self.modules:
-            if mod.__name__ not in self.bootcode_added:
-                # release loaded 
-                self.modules.pop(fullname)
-            elif 'content' in self.modules[fullname]:
-                # release loaded module content
-                self.modules[fullname].pop('content')
-        return mod
-    
-    def load_module(self, fullname: str):
-        """
-        Description:
-            Loads module into current namespace
-        Args:
-            fullname: name of the module/package to load
-        Return:
-            Returns module object with loaded/executed code within the module namespace"""
         
         if fullname not in self.modules:
             raise ImportError("Failed to load module %s from %s" % (fullname, self.url))
@@ -487,7 +406,6 @@ class ODImporter(object):
                 mod.__package__ = pkg_name
             else:
                 mod.__package__ = fullname.split('.')[0]
-        
         # Handle dynamic patching, if required
         self._dynamic_patch(fullname, mod)
         if import_module['cExtension']:
