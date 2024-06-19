@@ -269,7 +269,7 @@ class ODImporter(object):
     
     def _dispose(self, name, mod):
         if name in self.modules:
-            if mod.__name__ not in self.bytecode_added:
+            if mod.__name__ not in self.bootcode_added:
                 # release loaded
                 self.modules.pop(name)
             elif 'content' in self.modules[name]:
