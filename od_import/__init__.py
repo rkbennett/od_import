@@ -19,7 +19,7 @@ if threedottwelve:
 try:
     #check if importable
     import _memimporter
-    globals()['raw_python_import'] = False
+    raw_python_import = False
     cExtensionImport = True
     logging.info("[!] memory imports loaded")
 except:
@@ -27,23 +27,24 @@ except:
         #check if builtin
         _memimporter
         cExtensionImport = True
-        globals()['raw_python_import'] = False
+        raw_python_import = False
         logging.info("[!] memory imports loaded")
     except:
         try:
             pythonmemimporter
             _memimporter = pythonmemimporter._memimporter()
             cExtensionImport = True
-            globals()['raw_python_import'] = True
+            raw_python_import = True
             logging.info("[!] memory imports loaded")
         except:
             try:
                 from pythonmemimporter import _memimporter
                 _memimporter = _memimporter()
                 cExtensionImport = True
-                globals()['raw_python_import'] = True
+                raw_python_import = True
                 logging.info("[!] memory imports loaded")
             except:
+                raw_python_import = False
                 cExtensionImport = False
                 logging.warning("[!] memory imports not loaded, some packages may not work")
 
@@ -174,6 +175,7 @@ class ODImporter(object):
     """
 
     def __init__(self, url: str, INSECURE: bool=False, ignores: list=None, excludes: list=[], zip_password: bytes=None, config={}):
+        self.raw_python_import = raw_python_import
         self.uuid = str(uuid.uuid4().int)
         self.unique_proto_handler = 'proto_handler_' + self.uuid
         self.unique_proto_config = 'proto_config_' + self.uuid

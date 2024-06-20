@@ -67,6 +67,7 @@ def init_finder(finder):
     finder.ignore("urlparse")
 
 def hook_clr_loader(finder, module, path, proto_handler, proto_config):
+    raw_python_import = module.__loader__.raw_python_import
     finder.add_bootcode(f"""
 import os
 import sys
@@ -75,7 +76,7 @@ import {proto_handler}
 import {proto_config}
 from cffi import FFI
 ffi = FFI()
-if raw_python_import:
+if { raw_python_import }:
     from pythonclrhost import clrhost
     pyclrhost = clrhost()
 else:
@@ -100,7 +101,7 @@ if '{module.__name__}.ffi' not in sys.modules:
             runtime_version = [ name for name in os.listdir(net_path) if os.path.isdir(os.path.join(net_path, name)) ][-1]
         else:
             runtime_version = 'v4.0.30319'
-        if raw_python_import:
+        if { raw_python_import }:
             pyclrhost.load(dll, runtime_version)
         else:
             pyclrhost.dotnet(runtime_version, dll)
@@ -164,6 +165,7 @@ def hook_Crypto(finder, module, path, proto_handler, proto_config):
     path, as their import mechanism will not work from the zip file nor from the executable."""
     # copy all the "pyd" files from pycryptodome to the bundle directory with the correct folder structure
     crypto_path = os.path.dirname(module.__path__)
+    raw_python_import = module.__loader__.raw_python_import
     from pathlib import Path
     for path in Path(crypto_path).rglob('*.pyd'):
         finder.add_libfile(str(path.relative_to(os.path.dirname(crypto_path))), path)
@@ -180,7 +182,7 @@ import cffi
 from cffi import model
 import cffi.backend_ctypes
 
-if raw_python_import:
+if { raw_python_import }:
     def override_make_ffi_library(ffi, libname, flags):
         tmpffi = cffi.FFI()
         basestring = str
@@ -334,7 +336,7 @@ if '{module.__name__}.Util._raw_api' not in sys.modules:
             full_name = pycryptodome_filename(dir_comps, filename)
             try:
                 pyd = {proto_handler}(f'{{full_name}}.pyd', path_cache=[None],cache_update=False, config={proto_config})
-                if raw_python_import:
+                if { raw_python_import }:
                     ffi.memmodules.append(_memimporter.dlopen(pyd, 0))
                     vptrint = id(ffi.memmodules[-1])
                 else:
