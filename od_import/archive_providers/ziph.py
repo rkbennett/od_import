@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 import logging
 import zipfile
@@ -20,7 +21,12 @@ class ziph(object):
         self.url = url_base
         zip_io = io.BytesIO(data)
         self.zip_bytes = zipfile.ZipFile(zip_io)
-        self.path_cache = path_cache + [item.filename for item in self.zip_bytes.filelist]
+        self.path_cache = path_cache
+        for item in self.zip_bytes.filelist:
+            self.path_cache.append(item.filename)
+            path = os.path.dirname(item.filename) + "/"
+            if path not in self.path_cache:
+                self.path_cache.append(path)
     
     def extractor(self, url: str, path: str="", path_cache: list=[], cache_update: bool=False, config: None=None, pwd: bytes=None) -> bytes:
         """
