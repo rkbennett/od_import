@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 import uuid
 import types
@@ -288,7 +289,10 @@ class ODImporter(object):
                 while depth <= len(path.split("/")):
                     if "/".join(path.split("/")[:depth]) == path:
                         mods = [mod for mod in self.path_cache if mod.startswith(path)]
-                        c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                        if os.name == "nt":
+                            c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                        elif os.name == "posix":
+                            c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".so"))]
                         pyc_mods = [mod for mod in self.path_cache if mod.startswith(path) and mod.split("/")[depth - 1].endswith(".pyc")]
                         if mods:
                             if path + ".py" in mods:
@@ -300,7 +304,7 @@ class ODImporter(object):
                                 package_spec.origin = self.modules[fullname]['filepath']
                                 package_spec.has_location = True
                                 return package_spec
-                            elif cExtensionImport and c_mods: # or mod.endswith('.so')): #not currently supporting *nix
+                            elif cExtensionImport and c_mods:
                                 self.modules[fullname] = {}
                                 self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + c_mods[0], path_cache=self.path_cache, config=self.config)
                                 self.modules[fullname]['filepath'] = self.url + "/" + c_mods[0]
@@ -443,7 +447,10 @@ class ODImporter(object):
             while depth <= len(path.split("/")):
                 if "/".join(path.split("/")[:depth]) == path:
                     mods = [mod for mod in self.path_cache if mod.startswith(path)]
-                    c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                    if os.name == "nt":
+                        c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".dll") or mod.split("/")[depth - 1].endswith(".pyd"))]
+                    elif os.name == "posix":
+                        c_mods = [mod for mod in self.path_cache if mod.startswith(path) and (mod.split("/")[depth - 1].endswith(".so"))]
                     pyc_mods = [mod for mod in self.path_cache if mod.startswith(path) and mod.split("/")[depth - 1].endswith(".pyc")]
                     if mods:
                         if path + ".py" in mods:
@@ -453,7 +460,7 @@ class ODImporter(object):
                             self.modules[fullname]['package'] = False
                             self.modules[fullname]['cExtension'] = False
                             return self
-                        elif cExtensionImport and c_mods: # or mod.endswith('.so')): #not currently supporting *nix
+                        elif cExtensionImport and c_mods:
                             self.modules[fullname] = {}
                             self.modules[fullname]['content'] = self.proto_handler(self.url + "/" + c_mods[0], path_cache=self.path_cache, config=self.config)
                             self.modules[fullname]['filepath'] = self.url + "/" + c_mods[0]

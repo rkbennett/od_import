@@ -10,7 +10,7 @@ Inspired by [`httpimport`](https://github.com/operatorequals/httpimport).
 
 ## Features
 
-**Able to import packages with c extensions! (Windows only -- with _memimporter)**\
+**Able to import packages with c extensions! (Windows only -- with _memimporter, Windows and Linux with pythonmemimporter)**\
 **Able to import packages via HTTP/S, SMB, or FTP**\
 **Leverages path caching to avoid noisy bruteforcing (404s)**\
 **Written in modular way to allow for expanding supported protocols**\
@@ -317,7 +317,7 @@ If you are importing from a zip which requires a password, you must provide the 
 
 ## Gotchas
 
-* This has currently only been tested on windows 10 and 11 with python 3.10-3.12, but in theory should work on any version 3.6+
+* This has currently only been tested on windows 10 and 11 with python 3.10-3.12 and Ubuntu 22.04 with python 3.10, but in theory should work on any version 3.6+
 
 ## How to install
 
