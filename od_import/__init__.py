@@ -219,12 +219,12 @@ class ODImporter(object):
         if resp.startswith(b'\x50\x4b\x03\x04'):
             archive_handler = archive_handlers['zip']()(resp, self.url, self.path_cache, pwd=self.zip_password)
             self.path_cache = archive_handler.path_cache
-            self.proto_handler = archive_handler.extractor
+            sys.modules[self.unique_proto_handler] = self.proto_handler = archive_handler.extractor
         # Check if file is a tar or tgz
         elif resp.startswith(b'\x1f\x8b') or (len(resp) > 260 and resp[257:].startswith(b"ustar")):
             archive_handler = archive_handlers['tar']()(resp, self.url, self.path_cache)
             self.path_cache = archive_handler.path_cache
-            self.proto_handler = archive_handler.extractor
+            sys.modules[self.unique_proto_handler] = self.proto_handler = archive_handler.extractor
 
     def protocol_resolver(self, url: str):
         """ 
