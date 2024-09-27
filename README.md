@@ -223,6 +223,40 @@ od_import.add_remote_source('http://my-packages.local/site-packages', INSECURE=T
 import psutil
 ```
 
+### Importing module/packages from python variables
+
+```python
+a = """def bar():\n  return 'baz'"""
+import od_import
+od_import.add_memory_source(a, config={"file_name": "foo.py"})
+import foo
+foo.bar()
+```
+
+```python
+a = open("my.zip", "rb").read()
+import od_import
+od_import.add_memory_source(a)
+import mymodule
+mymodule.run()
+```
+
+```python
+a = open("_psutil_linux.so", "rb").read()
+import od_import
+od_import.add_memory_source(a, config={"file_name": "_psutil_linux.so"})
+import _psutil_linux
+_psutil_linux.linux_sysinfo()
+```
+
+```python
+a = {"foo.py": """def bar():\n  return 'baz'"""}
+import od_import
+od_import.add_memory_source(a)
+import foo
+foo.bar()
+```
+
 ## Configs
 
 Configs are a dict of attributes associated with the remote source for packages/modules
@@ -283,6 +317,10 @@ Configs are a dict of attributes associated with the remote source for packages/
 #### PIP
 
 * `package` (can be list of package name strings or package name string)
+
+#### MEM
+
+* `file_name` (optional arg supplied when data provided to add_memory_source is the contents of a single file, `file_name` must be the file name the code imports as)
 
 ## INSECURE
 
