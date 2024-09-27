@@ -16,7 +16,7 @@ threedottwelve = (sys.version_info.major == 3 and sys.version_info.minor >= 12)
 if threedottwelve:
     import importlib.machinery
 
-########################## Check for _memimporter for pyd/dll support ##################
+########################## Check for _memimporter for pyd/dll/so support ##################
 try:
     #check if importable
     import _memimporter
@@ -94,6 +94,16 @@ def ftp():
     from .protocol_handlers import ftp
     return ftp.ftp
 
+def mem():
+    """
+    Description:
+        Handles loading of dependencies of memory handler
+    Returns:
+        function: A function which handles variable-based imports
+    """
+    from .protocol_handlers import mem
+    return mem.mem
+
 ########################## Archive abstractors ######################
 def zip_handler():
     """ 
@@ -121,14 +131,16 @@ supported_protos = {
     "http": ["http","https"],
     "smb": ["smb"],
     "ftp": ["ftp", "ftps"],
-    "pip": ["pip"]
+    "pip": ["pip"],
+    "mem": ["mem"]
 }
 
 proto_handlers = {
     "http": http,
     "smb": smb,
     "ftp": ftp,
-    "pip": pip_handler
+    "pip": pip_handler,
+    "mem": mem
 }
 
 archive_handlers = {
@@ -139,7 +151,8 @@ archive_handlers = {
 secure_protos = [
     "https",
     "ftps",
-    "pip"
+    "pip",
+    "mem"
 ]
 
 wrapper_protos = [
@@ -585,6 +598,23 @@ class ODImporter(object):
                 self.modules[fullname].pop('content')
         return mod
 
+
+def add_memory_source(data: str | bytes, excludes: list=[], return_importer: bool=False, zip_password: bytes=None, config: dict={}):
+    """
+    Description:
+        Creates an ODImporter object and inserts it into the first entry of sys.meta_path
+    Args:
+        data: raw bytes or string of python code or zip/tar of python package
+        excludes: modules to exclude from importing
+        return_importer: boolean which determines if the importer object should be returned (used for internal calls)
+        zip_password: used for unzipping memory file which require a password
+        config: protocol handler configuration dictionary
+    """
+    config['data'] = data
+    importer = ODImporter("mem://python", False, zip_password=zip_password, config=config)
+    sys.meta_path.insert(0, importer)
+    if return_importer:
+        return importer
 
 def add_remote_source(url: str, INSECURE: bool=False, excludes: list=[], return_importer: bool=False, zip_password: bytes=None, config: dict={}):
     """
