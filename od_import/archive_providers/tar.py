@@ -28,7 +28,7 @@ class tar(object):
                         if cached_path.startswith(f"{sdist}/") and cached_path != f"{sdist}/":
                             self.path_cache.append(cached_path.replace(f"{sdist}/", ""))
         else:
-            self.sdist_path_shim
+            self.sdist_path_shim = []
 
     def extractor(self, url: str, path: str="", path_cache: list=[], cache_update: bool=False, config: object=None) -> bytes:
         """
