@@ -422,6 +422,7 @@ class ODImporter(object):
                 mod.__file__ = spec.origin
                 mod.__loader__ = spec.loader
                 mod.__package__ = spec.parent
+                sys.modules[name] = mod
             else:
                 if self.modules[name]['filepath']:
                     self.path = module.__file__
