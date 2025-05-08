@@ -18,7 +18,7 @@ class tar(object):
         self.url = url_base
         tar_io = io.BytesIO(data)
         self.tar_bytes = tarfile.open(fileobj=tar_io, mode='r:*')
-        sdists = [item.name.split("/")[0] for item in self.tar_bytes.getmembers() if not item.isdir() and item.name.split("/")[1] == "PKG-INFO"]
+        sdists = [item.name.split("/")[0] for item in self.tar_bytes.getmembers() if not item.isdir() and len(item.name.split("/")) > 1 and item.name.split("/")[1] == "PKG-INFO"]
         self.path_cache = path_cache + [item.name + ("/" if item.isdir() else "") for item in self.tar_bytes.getmembers()]
         if sdists:
             self.sdist_path_shim = {"-".join(sdist.split("-")[:-1]): sdist for sdist in sdists if "-".join(sdist.split("-")[:-1]) not in self.path_cache}
