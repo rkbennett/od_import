@@ -164,7 +164,7 @@ def hook_Crypto(finder, module, path, proto_handler, proto_config):
     as .dll files. Furthermore, pycryptodome needs to be patched to import those libraries from an external
     path, as their import mechanism will not work from the zip file nor from the executable."""
     # copy all the "pyd" files from pycryptodome to the bundle directory with the correct folder structure
-    crypto_path = os.path.dirname(module.__path__)
+    crypto_path = os.path.dirname(module.__path__[0] if isinstance(module.__path__, list) else module.__path__)
     raw_python_import = module.__loader__.raw_python_import
     from pathlib import Path
     for path in Path(crypto_path).rglob('*.pyd'):
