@@ -128,7 +128,7 @@ def tar_handler():
 ########################## Static objects ############################
 
 supported_protos = {
-    "http": ["http","https"],
+    "http": ["http","https","file"],
     "smb": ["smb"],
     "ftp": ["ftp", "ftps"],
     "pip": ["pip"],
@@ -152,7 +152,8 @@ secure_protos = [
     "https",
     "ftps",
     "pip",
-    "mem"
+    "mem",
+    "file"
 ]
 
 wrapper_protos = [
