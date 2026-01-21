@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "od_import"
+version = "0.0.1"
+description = "A Python package for remote, in-memory Python package/module importing via HTTP/S, FTP, or SMB."
+authors = [
+    { name = "rkbennett", email = "r.k.bennett@hotmail.com" }
+]
+requires-python = ">=3.6"
+readme = "README.md"
+license = { file = "LICENSE" }
